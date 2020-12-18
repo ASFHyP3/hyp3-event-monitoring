@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  SubscriptionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: subscription_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: user_id
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+            - AttributeName: subscription_name
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      AttributeDefinitions:
+        - AttributeName: subsciption_id
+          AttributeType: S
+  ProductTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: product_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: subscription_id
+          KeySchema:
+            - AttributeName: subscription_id
+              KeyType: HASH
+            - AttributeName: subscription_name
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      AttributeDefinitions:
+        - AttributeName: subsciption_id
+          AttributeType: S
+        - AttributeName: product_id
+          AttributeType: S
