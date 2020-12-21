@@ -32,8 +32,6 @@ Resources:
           KeySchema:
             - AttributeName: subscription_id
               KeyType: HASH
-            - AttributeName: subscription_name
-              KeyType: RANGE
           Projection:
             ProjectionType: ALL
       AttributeDefinitions:

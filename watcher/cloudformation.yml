@@ -41,6 +41,8 @@ Resources:
           SUBSCRIPTION_TABLE: !Ref SubsctiptionTable
           PRODUCT_TABLE: !Ref ProductTable
           HYP3_URL: !Ref HyP3URL
+          EDLUSERNAME: !Ref EDLUsername
+          EDLPASSWORD: !Ref EDLPASSWORD
       Code: /src
       Handler: main.lambda_handler
       MemorySize: 3008
