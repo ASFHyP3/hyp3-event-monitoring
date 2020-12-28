@@ -1,0 +1,39 @@
+
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  STACK_NAME: jlr-dev-subscriptions
+  AWS_REGION: us-west-2
+  TEMPLATE_BUCKET: cf-templates-aubvn3i9olmk-us-west-2
+  AWS_ACCESS_KEY_ID: ${{ secrets.V2_AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.V2_AWS_SECRET_ACCESS_KEY }}
+  CLOUDFORMATION_ROLE_ARN: ${{ secrets.CLOUDFORMATION_ROLE_ARN }}
+
+jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.TOOLS_BOT_PAK }}
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Package and deploy
+        run: |
+          aws cloudformation deploy \
+            --stack-name ${STACK_NAME} \
+            --template-file cloudformation.yml \
+            --role-arn ${CLOUDFORMATION_ROLE_ARN}
