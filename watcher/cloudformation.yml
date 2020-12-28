@@ -44,7 +44,7 @@ Resources:
           EDLUSERNAME: !Ref EDLUsername
           EDLPASSWORD: !Ref EDLPASSWORD
       Code: /src
-      Handler: main.lambda_handler
+      Handler: find_new.lambda_handler
       MemorySize: 3008
       Role: !GetAtt Role.Arn
       Runtime: python3.8

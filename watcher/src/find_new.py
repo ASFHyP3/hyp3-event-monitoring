@@ -12,7 +12,8 @@ HYP3 = HyP3(environ['HYP3_URL'])
 
 
 def get_actionable_subscriptions():
-    return []
+    response = SUBSCRIPTION_TABLE.scan()
+    return response['Items']  # TODO implement filtering
 
 
 def get_rtc_granules(subscription):

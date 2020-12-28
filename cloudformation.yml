@@ -1,6 +1,10 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Resources:
+  ProductBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      
   SubscriptionTable:
     Type: AWS::DynamoDB::Table
     Properties:

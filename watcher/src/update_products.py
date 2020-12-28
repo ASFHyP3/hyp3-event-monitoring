@@ -8,6 +8,7 @@ HYP3 = HyP3(environ['HYP3_URL'])
 
 
 def collect_product_files(product):
+
     pass
 
 
