@@ -3,16 +3,27 @@ from uuid import uuid4
 
 import requests
 from hyp3_sdk import HyP3
-from src.util import DB, PRODUCT_TABLE, get_existing_products
 
+import boto3
+from boto3.dynamodb.conditions import Key
 
+DB = boto3.resource('dynamodb')
+
+PRODUCT_TABLE = DB.Table(environ['PRODUCT_TABLE'])
 SUBSCRIPTION_TABLE = DB.Table(environ['SUBSCRIPTION_TABLE'])
+
 HYP3 = HyP3(environ['HYP3_URL'])
 
 
 def get_actionable_subscriptions():
     response = SUBSCRIPTION_TABLE.scan()
     return response['Items']  # TODO implement filtering
+
+
+def get_existing_products(subscription):
+    key_expression = Key('subscription_name').eq(subscription)
+    products = PRODUCT_TABLE.query(KeyConditionExpression=key_expression)
+    return products['Items']
 
 
 def get_rtc_granules(subscription):
