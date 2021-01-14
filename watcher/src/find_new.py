@@ -1,11 +1,10 @@
 from os import environ
 from uuid import uuid4
 
+import requests
 from hyp3_sdk import HyP3
-from hyp3_sdk.util import get_authenticated_session
+from src.util import DB, PRODUCT_TABLE, get_existing_products
 
-from src.util import get_existing_products, DB, PRODUCT_TABLE
-from src.nearest_neighbor import make_pairs
 
 SUBSCRIPTION_TABLE = DB.Table(environ['SUBSCRIPTION_TABLE'])
 HYP3 = HyP3(environ['HYP3_URL'])
@@ -17,16 +16,15 @@ def get_actionable_subscriptions():
 
 
 def get_rtc_granules(subscription):
-    session = get_authenticated_session(environ['EDLUSERNAME'], environ['EDLPASSWORD'])
-    response = session.get('https://api.daac.asf.alaska.edu/services/search/param',
-                           params={
-                               'intersectsWith': subscription['geometry'],
-                               'start': subscription['start'],
-                               'end': subscription['end'],
-                               'platform': 'SENTINEL-1',
-                               'processingLevel': subscription['product_types'],
-                               'output': 'jsonlite',
-                           })
+    response = requests.get('https://api.daac.asf.alaska.edu/services/search/param',
+                            params={
+                                'intersectsWith': subscription.get('geometry'),
+                                'start': subscription['start'],
+                                'end': subscription['end'],
+                                'platform': 'SENTINEL-1',
+                                'processingLevel': subscription['file_types'],
+                                'output': 'jsonlite',
+                            })
     return [granule['granuleName'] for granule in response.json()['results']]
 
 
@@ -44,15 +42,6 @@ def submit_product_to_hyp3(subscription, granules):
                                    scale=subscription['processing_parameters']['scale'],
                                    speckle_filter=subscription['processing_parameters']['speckle_filter']
                                    )
-    elif subscription['processing_type'] == 'INSAR_GAMMA':
-        return HYP3.submit_insar_job(granules[0],
-                                     granules[1],
-                                     subscription['subscription_name'],
-                                     include_look_vectors=subscription['processing_parameters']['include_look_vectors'],
-                                     include_los_displacement=subscription['processing_parameters'][
-                                         'include_los_displacement'],
-                                     looks=subscription['processing_parameters']['looks']
-                                     )
 
 
 def add_product_for_subscription(subscription, granules):
@@ -66,21 +55,12 @@ def add_product_for_subscription(subscription, granules):
     PRODUCT_TABLE.put_item(Item=product_item)
 
 
-def get_insar_pairs(subscription):
-    return make_pairs(get_rtc_granules(subscription))
-
-
 def lambda_handler(event, context):
     subscriptions = get_actionable_subscriptions()
     for subscription in subscriptions:
-        products = get_existing_products(subscription)
+        products = get_existing_products(subscription['subscription_name'])
         if subscription['processing_type'] == 'RTC_GAMMA':
             granules = get_rtc_granules(subscription)
             for granule in granules:
                 if granule not in [product['granules'] for product in products]:
                     add_product_for_subscription(subscription, granule)
-        if subscription['processing_type'] == 'INSAR_GAMMA':
-            pairs = get_insar_pairs(subscription)
-            for pair in pairs:
-                if sorted(pair) not in [sorted(product['granules']) for product in products]:
-                    add_product_for_subscription(subscription, pair)

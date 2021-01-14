@@ -12,7 +12,7 @@ Resources:
         - AttributeName: subscription_name
           KeyType: HASH
       AttributeDefinitions:
-        - AttributeName: subsciption_name
+        - AttributeName: subscription_name
           AttributeType: S
   ProductTable:
     Type: AWS::DynamoDB::Table
@@ -24,7 +24,7 @@ Resources:
         - AttributeName: product_id
           KeyType: RANGE
       AttributeDefinitions:
-        - AttributeName: subsciption_name
+        - AttributeName: subscription_name
           AttributeType: S
         - AttributeName: product_id
           AttributeType: S
