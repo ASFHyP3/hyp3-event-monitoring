@@ -38,12 +38,12 @@ jobs:
       - name: Package and deploy
         run: |
           aws cloudformation package \
-            --template-file apps/main-cf.yml \
+            --template-file cloudformation.yml \
             --s3-bucket ${TEMPLATE_BUCKET} \
             --output-template-file packaged.yml
           aws cloudformation deploy \
             --stack-name ${STACK_NAME} \
-            --template-file cloudformation.yml \
+            --template-file packaged.yml \
             --role-arn ${CLOUDFORMATION_ROLE_ARN} \
             --parameter-overrides \
                       EDLUsername="${EDL_USERNAME}" \
