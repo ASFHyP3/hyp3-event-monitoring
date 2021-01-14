@@ -35,10 +35,17 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Package and deploy
+      - uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
+      - name: install dependencies and render templates
         run: |
           pip install --upgrade pip
           pip install -r watcher/requirements.txt -t watcher/src
+
+      - name: Package and deploy
+        run: |
           aws cloudformation package \
             --template-file cloudformation.yml \
             --s3-bucket ${TEMPLATE_BUCKET} \
