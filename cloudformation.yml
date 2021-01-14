@@ -39,3 +39,11 @@ Resources:
           AttributeType: S
         - AttributeName: product_id
           AttributeType: S
+  Watcher:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: watcher/cloudformation.yml
+      Parameters:
+        HyP3_URL: !Ref HyP3URL
+        EDLUsername: !Ref EDLUsername
+        EDLPassword: !Ref EDLPassword
