@@ -44,7 +44,7 @@ Resources:
     Properties:
       Environment:
         Variables:
-          SUBSCRIPTION_TABLE: !Ref SubsctiptionTable
+          SUBSCRIPTION_TABLE: !Ref SubscriptionTable
           PRODUCT_TABLE: !Ref ProductTable
           HYP3_URL: !Ref HyP3URL
           EDLUSERNAME: !Ref EDLUsername
