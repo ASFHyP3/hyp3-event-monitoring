@@ -36,7 +36,7 @@ def submit_product_to_hyp3(subscription, granules):
                                    include_dem=subscription['processing_parameters']['include_dem'],
                                    include_inc_map=subscription['processing_parameters']['include_inc_map'],
                                    include_sattering_area=subscription['processing_parameters'][
-                                       'include_sattering_area'],
+                                       'include_scattering_area'],
                                    radiometry=subscription['processing_parameters']['radiometry'],
                                    resolution=subscription['processing_parameters']['resolution'],
                                    scale=subscription['processing_parameters']['scale'],
