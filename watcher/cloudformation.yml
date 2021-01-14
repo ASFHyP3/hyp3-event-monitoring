@@ -49,7 +49,7 @@ Resources:
           HYP3_URL: !Ref HyP3URL
           EDLUSERNAME: !Ref EDLUsername
           EDLPASSWORD: !Ref EDLPassword
-      Code: /src
+      Code: src/
       Handler: find_new.lambda_handler
       MemorySize: 3008
       Role: !GetAtt Role.Arn
