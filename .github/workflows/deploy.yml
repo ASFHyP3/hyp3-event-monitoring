@@ -45,6 +45,7 @@ jobs:
             --stack-name ${STACK_NAME} \
             --template-file packaged.yml \
             --role-arn ${CLOUDFORMATION_ROLE_ARN} \
+            --capabilities CAPABILITY_IAM \
             --parameter-overrides \
                 EDLUsername="${EDL_USERNAME}" \
                 EDLPassword="${EDL_PASSWORD}" \
