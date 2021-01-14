@@ -48,7 +48,7 @@ def add_product_for_subscription(subscription, granules):
     product = submit_product_to_hyp3(subscription, granules)
     product_item = {
         'product_id': uuid4(),
-        'subscription_id': subscription['subscription_id'],
+        'subscription_name': subscription['subscription_name'],
         'hyp3_id': product.job_id,
         'status_code': 'PROCESSING',
     }
