@@ -49,7 +49,7 @@ def submit_product_to_hyp3(subscription, granules):
                                    include_sattering_area=subscription['processing_parameters'][
                                        'include_scattering_area'],
                                    radiometry=subscription['processing_parameters']['radiometry'],
-                                   resolution=subscription['processing_parameters']['resolution'],
+                                   resolution=float(subscription['processing_parameters']['resolution']),
                                    scale=subscription['processing_parameters']['scale'],
                                    speckle_filter=subscription['processing_parameters']['speckle_filter']
                                    )
