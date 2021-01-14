@@ -2,7 +2,9 @@
 name: Deploy to AWS
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - develop
 
 env:
   STACK_NAME: jlr-dev-subscriptions
@@ -11,6 +13,10 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.V2_AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.V2_AWS_SECRET_ACCESS_KEY }}
   CLOUDFORMATION_ROLE_ARN: ${{ secrets.CLOUDFORMATION_ROLE_ARN }}
+
+  EDL_USERNAME: ${{ secrets.EDL_USERNAME }}
+  EDL_PASSWORD: ${{ secrets.EDL_PASSWORD }}
+  HYP3_URL: https://hyp3-api.asf.alaska.edu
 
 jobs:
 
@@ -31,7 +37,15 @@ jobs:
 
       - name: Package and deploy
         run: |
+          aws cloudformation package \
+            --template-file apps/main-cf.yml \
+            --s3-bucket ${TEMPLATE_BUCKET} \
+            --output-template-file packaged.yml
           aws cloudformation deploy \
             --stack-name ${STACK_NAME} \
             --template-file cloudformation.yml \
-            --role-arn ${CLOUDFORMATION_ROLE_ARN}
+            --role-arn ${CLOUDFORMATION_ROLE_ARN} \
+            --parameter-overrides \
+                      EDLUsername="${EDL_USERNAME}" \
+                      EDLPassword="${EDL_PASSWORD}" \
+                      HyP3URL="${HYP3_URL}"

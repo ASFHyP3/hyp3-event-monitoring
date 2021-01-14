@@ -10,6 +10,12 @@ Parameters:
   HyP3URL:
     Type: String
 
+  EDLUsername:
+    Type: String
+
+  EDLPassword:
+    Type: String
+
 Resources:
   Role:
     Type: AWS::IAM::Role
@@ -42,7 +48,7 @@ Resources:
           PRODUCT_TABLE: !Ref ProductTable
           HYP3_URL: !Ref HyP3URL
           EDLUSERNAME: !Ref EDLUsername
-          EDLPASSWORD: !Ref EDLPASSWORD
+          EDLPASSWORD: !Ref EDLPassword
       Code: /src
       Handler: find_new.lambda_handler
       MemorySize: 3008

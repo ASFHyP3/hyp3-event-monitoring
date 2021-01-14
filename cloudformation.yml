@@ -1,5 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 
+Parameters:
+
+  HyP3URL:
+    Type: String
+
+  EDLUsername:
+    Type: String
+
+  EDLPassword:
+    Type: String
+
 Resources:
   ProductBucket:
     Type: AWS::S3::Bucket
