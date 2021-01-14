@@ -46,6 +46,6 @@ jobs:
             --template-file packaged.yml \
             --role-arn ${CLOUDFORMATION_ROLE_ARN} \
             --parameter-overrides \
-                      EDLUsername="${EDL_USERNAME}" \
-                      EDLPassword="${EDL_PASSWORD}" \
-                      HyP3URL="${HYP3_URL}"
+                EDLUsername="${EDL_USERNAME}" \
+                EDLPassword="${EDL_PASSWORD}" \
+                HyP3URL="${HYP3_URL}"
