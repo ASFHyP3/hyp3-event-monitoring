@@ -45,7 +45,7 @@ Resources:
       TemplateURL: watcher/cloudformation.yml
       Parameters:
         HyP3URL: !Ref HyP3URL
-        SubscriptionTable: !Ref SubsctiptionTable
+        SubscriptionTable: !Ref SubscriptionTable
         ProductTable: !Ref ProductTable
         EDLUsername: !Ref EDLUsername
         EDLPassword: !Ref EDLPassword
