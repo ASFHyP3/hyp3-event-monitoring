@@ -8,7 +8,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 
 DB = boto3.resource('dynamodb')
-HYP3 = HyP3(environ['HYP3_URL'])
+HYP3 = HyP3(environ['HYP3_URL'], username=environ['EDLUSERNAME'], password=environ['EDLPASSWORD'])
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
 
