@@ -9,6 +9,7 @@ from boto3.dynamodb.conditions import Key
 
 DB = boto3.resource('dynamodb')
 HYP3 = HyP3(environ['HYP3_URL'])
+SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
 
 def get_actionable_subscriptions():
@@ -26,7 +27,7 @@ def get_existing_products(subscription_name):
 
 
 def get_rtc_granules(subscription):
-    response = requests.get('https://api.daac.asf.alaska.edu/services/search/param',
+    response = requests.get(SEARCH_URL,
                             params={
                                 'intersectsWith': subscription.get('geometry'),
                                 'start': subscription['start'],
@@ -35,6 +36,7 @@ def get_rtc_granules(subscription):
                                 'processingLevel': subscription['file_types'],
                                 'output': 'jsonlite',
                             })
+    response.raise_for_status()
     return [granule['granuleName'] for granule in response.json()['results']]
 
 
@@ -58,10 +60,11 @@ def add_product_for_subscription(subscription, granules):
     table = DB.Table(environ['PRODUCT_TABLE'])
     product = submit_product_to_hyp3(subscription, granules)
     product_item = {
-        'product_id': uuid4(),
+        'product_id': str(uuid4()),
         'subscription_name': subscription['subscription_name'],
         'hyp3_id': product.job_id,
-        'status_code': 'PROCESSING',
+        'status_code': 'PENDING',
+        'granules': granules,
     }
     table.put_item(Item=product_item)
 
@@ -74,4 +77,4 @@ def lambda_handler(event, context):
             granules = get_rtc_granules(subscription)
             for granule in granules:
                 if granule not in [product['granules'] for product in products]:
-                    add_product_for_subscription(subscription, granule)
+                    add_product_for_subscription(subscription, [granule])
