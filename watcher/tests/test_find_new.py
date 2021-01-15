@@ -6,6 +6,7 @@ from uuid import uuid4
 import boto3
 import pytest
 import responses
+from hyp3_sdk.util import AUTH_URL
 
 import yaml
 from moto import mock_dynamodb2
@@ -155,6 +156,7 @@ def test_get_rtc_granules():
 
 @responses.activate
 def test_submit_product_to_hyp3():
+    responses.add(responses.GET, AUTH_URL)
     subscription = {
         'subscription_name': 'subscription_name1',
         'processing_type': 'RTC_GAMMA',
@@ -193,6 +195,7 @@ def test_submit_product_to_hyp3():
 
 
 def test_add_product_for_subscription(tables):
+    responses.add(responses.GET, AUTH_URL)
     subscription = {
         'subscription_name': 'subscription_name1',
         'processing_type': 'RTC_GAMMA',
@@ -233,6 +236,7 @@ def test_add_product_for_subscription(tables):
 
 @responses.activate
 def test_lambda_handler(tables):
+    responses.add(responses.GET, AUTH_URL)
     subscriptions = [
         {
             'subscription_name': 'subscription_name1',

@@ -8,7 +8,6 @@ import boto3
 from boto3.dynamodb.conditions import Key
 
 DB = boto3.resource('dynamodb')
-HYP3 = HyP3(environ['HYP3_URL'], username=environ['EDLUSERNAME'], password=environ['EDLPASSWORD'])
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
 
@@ -41,8 +40,10 @@ def get_rtc_granules(subscription):
 
 
 def submit_product_to_hyp3(subscription, granules):
+    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDLUSERNAME'], password=environ['EDLPASSWORD'])
+
     if subscription['processing_type'] == 'RTC_GAMMA':
-        return HYP3.submit_rtc_job(granules[0],
+        return hyp3.submit_rtc_job(granules[0],
                                    name=subscription['subscription_name'],
                                    dem_matching=subscription['processing_parameters']['dem_matching'],
                                    include_dem=subscription['processing_parameters']['include_dem'],
