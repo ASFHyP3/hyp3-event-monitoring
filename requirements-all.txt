@@ -1,5 +1,5 @@
 boto3
-pytests
+pytest
 moto
 responses==0.12.0
 pyYAML
