@@ -1,0 +1,6 @@
+boto3
+pytest
+moto
+responses==0.12.0
+pyYAML
+-r watcher/requirements.txt

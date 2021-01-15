@@ -8,26 +8,26 @@ import boto3
 from boto3.dynamodb.conditions import Key
 
 DB = boto3.resource('dynamodb')
-
-PRODUCT_TABLE = DB.Table(environ['PRODUCT_TABLE'])
-SUBSCRIPTION_TABLE = DB.Table(environ['SUBSCRIPTION_TABLE'])
-
 HYP3 = HyP3(environ['HYP3_URL'])
+SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
 
 def get_actionable_subscriptions():
-    response = SUBSCRIPTION_TABLE.scan()
+    table = DB.Table(environ['SUBSCRIPTION_TABLE'])
+    response = table.scan()
     return response['Items']  # TODO implement filtering
 
 
-def get_existing_products(subscription):
-    key_expression = Key('subscription_name').eq(subscription)
-    products = PRODUCT_TABLE.query(KeyConditionExpression=key_expression)
+def get_existing_products(subscription_name):
+    table = DB.Table(environ['PRODUCT_TABLE'])
+
+    key_expression = Key('subscription_name').eq(subscription_name)
+    products = table.query(KeyConditionExpression=key_expression)
     return products['Items']
 
 
 def get_rtc_granules(subscription):
-    response = requests.get('https://api.daac.asf.alaska.edu/services/search/param',
+    response = requests.get(SEARCH_URL,
                             params={
                                 'intersectsWith': subscription.get('geometry'),
                                 'start': subscription['start'],
@@ -36,6 +36,7 @@ def get_rtc_granules(subscription):
                                 'processingLevel': subscription['file_types'],
                                 'output': 'jsonlite',
                             })
+    response.raise_for_status()
     return [granule['granuleName'] for granule in response.json()['results']]
 
 
@@ -56,14 +57,16 @@ def submit_product_to_hyp3(subscription, granules):
 
 
 def add_product_for_subscription(subscription, granules):
+    table = DB.Table(environ['PRODUCT_TABLE'])
     product = submit_product_to_hyp3(subscription, granules)
     product_item = {
-        'product_id': uuid4(),
+        'product_id': str(uuid4()),
         'subscription_name': subscription['subscription_name'],
         'hyp3_id': product.job_id,
-        'status_code': 'PROCESSING',
+        'status_code': 'PENDING',
+        'granules': granules,
     }
-    PRODUCT_TABLE.put_item(Item=product_item)
+    table.put_item(Item=product_item)
 
 
 def lambda_handler(event, context):
@@ -74,4 +77,4 @@ def lambda_handler(event, context):
             granules = get_rtc_granules(subscription)
             for granule in granules:
                 if granule not in [product['granules'] for product in products]:
-                    add_product_for_subscription(subscription, granule)
+                    add_product_for_subscription(subscription, [granule])
