@@ -8,21 +8,20 @@ import boto3
 from boto3.dynamodb.conditions import Key
 
 DB = boto3.resource('dynamodb')
-
-PRODUCT_TABLE = DB.Table(environ['PRODUCT_TABLE'])
-SUBSCRIPTION_TABLE = DB.Table(environ['SUBSCRIPTION_TABLE'])
-
 HYP3 = HyP3(environ['HYP3_URL'])
 
 
 def get_actionable_subscriptions():
-    response = SUBSCRIPTION_TABLE.scan()
+    table = DB.Table(environ['SUBSCRIPTION_TABLE'])
+    response = table.scan()
     return response['Items']  # TODO implement filtering
 
 
-def get_existing_products(subscription):
-    key_expression = Key('subscription_name').eq(subscription)
-    products = PRODUCT_TABLE.query(KeyConditionExpression=key_expression)
+def get_existing_products(subscription_name):
+    table = DB.Table(environ['PRODUCT_TABLE'])
+
+    key_expression = Key('subscription_name').eq(subscription_name)
+    products = table.query(KeyConditionExpression=key_expression)
     return products['Items']
 
 
@@ -56,6 +55,7 @@ def submit_product_to_hyp3(subscription, granules):
 
 
 def add_product_for_subscription(subscription, granules):
+    table = DB.Table(environ['PRODUCT_TABLE'])
     product = submit_product_to_hyp3(subscription, granules)
     product_item = {
         'product_id': uuid4(),
@@ -63,7 +63,7 @@ def add_product_for_subscription(subscription, granules):
         'hyp3_id': product.job_id,
         'status_code': 'PROCESSING',
     }
-    PRODUCT_TABLE.put_item(Item=product_item)
+    table.put_item(Item=product_item)
 
 
 def lambda_handler(event, context):
