@@ -21,4 +21,4 @@ jobs:
           PYTHONPATH: watcher/src
         run: |
           export $(xargs < watcher/tests/cfg.env)
-          pytest watcher/tests
+          pytest watcher/tests/
