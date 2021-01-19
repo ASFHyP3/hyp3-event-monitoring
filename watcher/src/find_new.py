@@ -31,7 +31,7 @@ def get_rtc_granules(subscription):
                                 'intersectsWith': subscription.get('geometry'),
                                 'start': subscription['start'],
                                 'end': subscription['end'],
-                                'beamMode': 'IW'
+                                'beamMode': 'IW',
                                 'platform': 'SENTINEL-1',
                                 'processingLevel': subscription['file_types'],
                                 'output': 'jsonlite',
