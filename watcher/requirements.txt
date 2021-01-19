@@ -1,6 +1,2 @@
 hyp3-sdk
 requests
-shapely
-pytest
-moto
-pyYAML
