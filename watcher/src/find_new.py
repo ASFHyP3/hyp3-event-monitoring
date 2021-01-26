@@ -97,7 +97,7 @@ def add_product_for_processing(granule, event, process):
                 'job_type': job.job_type,
             })
     elif process['job_type'] == 'INSAR_GAMMA':
-        for depth in (1,2):
+        for depth in (1, 2):
             neighbor = get_insar_neighbor(granule, depth)
             job = HYP3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])
             products.append({
