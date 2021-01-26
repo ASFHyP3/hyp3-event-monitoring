@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  SubscriptionTable:
+  EventTable:
     Type: String
 
   ProductTable:
@@ -39,9 +39,8 @@ Resources:
                 Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
               - Effect: Allow
                 Action:
-                  - dynamodb:Query
                   - dynamodb:Scan
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${SubscriptionTable}*"
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${EventTable}*"
               - Effect: Allow
                 Action:
                   - dynamodb:PutItem
@@ -53,11 +52,11 @@ Resources:
     Properties:
       Environment:
         Variables:
-          SUBSCRIPTION_TABLE: !Ref SubscriptionTable
+          EVENT_TABLE: !Ref EventTable
           PRODUCT_TABLE: !Ref ProductTable
           HYP3_URL: !Ref HyP3URL
-          EDLUSERNAME: !Ref EDLUsername
-          EDLPASSWORD: !Ref EDLPassword
+          EDL_USERNAME: !Ref EDLUsername
+          EDL_PASSWORD: !Ref EDLPassword
       Code: src/
       Handler: find_new.lambda_handler
       MemorySize: 3008
