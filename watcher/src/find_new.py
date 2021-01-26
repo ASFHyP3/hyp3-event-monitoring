@@ -39,8 +39,8 @@ def get_existing_products(event):
 def get_granules(event):
     search_params = {
         'intersectsWith': event.get('wkt'),
-        'start': event['start'],
-        'end': event.get('end'),
+        'start': event['processing_timeframe']['start'],
+        'end': event['processing_timeframe'].get('end'),
         'beamMode': 'IW',
         'platform': 'SENTINEL-1',
         'processingLevel': 'SLC',
@@ -53,9 +53,7 @@ def get_granules(event):
 
 def get_unprocessed_granules(event):
     all_granules = get_granules(event)
-    processed_granules = []
-    for product in get_existing_products(event):
-        processed_granules.extend(product['granules'])
+    processed_granules = [product['granules'][0] for product in get_existing_products(event)]
     return [granule for granule in all_granules if granule not in processed_granules]
 
 
@@ -77,21 +75,53 @@ def get_processes():
     ]
 
 
-def get_insar_neighbor(granule, distance):
-    return ""
+def get_insar_neighbor(granule_name, distance):
+    return {}
 
 
 def add_product_for_processing(granule, event, process):
     table = DB.Table(environ['PRODUCT_TABLE'])
     products = []
     if process['job_type'] == 'RTC_GAMMA':
-        products.append(HYP3.submit_rtc_job(granule=granule, **process['parameters']))
+        job = HYP3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
+        products.append({
+                'product_id': job.job_id,
+                'event_id': event['event_id'],
+                'granules': [{
+                    'granule_name': granule['granuleName'],
+                    'aquisition_date': granule['startTime'],
+                    'path': granule['path'],
+                    'frame': granule['frame'],
+                    'geometry': granule['wkt'],
+                }],
+                'job_type': job.job_type,
+            })
     elif process['job_type'] == 'INSAR_GAMMA':
-        nearest_neighbor = get_insar_neighbor(granule, 1)
-        next_nearest_neighbor = get_insar_neighbor(granule, 2)
-        products.append(HYP3.submit_insar_job(granule1=granule, granule2=nearest_neighbor, **process['parameters']))
-        products.append(
-            HYP3.submit_insar_job(granule1=granule, granule2=next_nearest_neighbor, **process['parameters']))
+        for depth in (1,2):
+            neighbor = get_insar_neighbor(granule, depth)
+            job = HYP3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])
+            products.append({
+                'product_id': job.job_id,
+                'event_id': event['event_id'],
+                'granules': [
+                    {
+                        'granule_name': granule['granuleName'],
+                        'aquisition_date': granule['startTime'],
+                        'path': granule['path'],
+                        'frame': granule['frame'],
+                        'geometry': granule['wkt'],
+                    },
+                    {
+                        'granule_name': neighbor['granuleName'],
+                        'aquisition_date': neighbor['startTime'],
+                        'path': neighbor['path'],
+                        'frame': neighbor['frame'],
+                        'geometry': neighbor['wkt'],
+                    }
+                ],
+                'job_type': job.job_type,
+            })
+
     else:
         pass
         # TODO handle unknown job type
