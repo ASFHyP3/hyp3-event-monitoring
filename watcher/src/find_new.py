@@ -79,48 +79,36 @@ def get_insar_neighbor(granule_name, distance):
     return {}
 
 
+def get_granule_dict(granule):
+    return {
+        'granule_name': granule['granuleName'],
+        'aquisition_date': granule['startTime'],
+        'path': granule['path'],
+        'frame': granule['frame'],
+        'geometry': granule['wkt'],
+    }
+
+
+def format_product(job, event, granules):
+    return {
+        'product_id': job.job_id,
+        'event_id': event['event_id'],
+        'granules': [get_granule_dict(granule) for granule in granules],
+        'job_type': job.job_type,
+    }
+
+
 def add_product_for_processing(granule, event, process):
     table = DB.Table(environ['PRODUCT_TABLE'])
     products = []
     if process['job_type'] == 'RTC_GAMMA':
         job = HYP3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
-        products.append({
-                'product_id': job.job_id,
-                'event_id': event['event_id'],
-                'granules': [{
-                    'granule_name': granule['granuleName'],
-                    'aquisition_date': granule['startTime'],
-                    'path': granule['path'],
-                    'frame': granule['frame'],
-                    'geometry': granule['wkt'],
-                }],
-                'job_type': job.job_type,
-            })
+        products.append(format_product(job, event, [granule]))
     elif process['job_type'] == 'INSAR_GAMMA':
         for depth in (1, 2):
             neighbor = get_insar_neighbor(granule, depth)
             job = HYP3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])
-            products.append({
-                'product_id': job.job_id,
-                'event_id': event['event_id'],
-                'granules': [
-                    {
-                        'granule_name': granule['granuleName'],
-                        'aquisition_date': granule['startTime'],
-                        'path': granule['path'],
-                        'frame': granule['frame'],
-                        'geometry': granule['wkt'],
-                    },
-                    {
-                        'granule_name': neighbor['granuleName'],
-                        'aquisition_date': neighbor['startTime'],
-                        'path': neighbor['path'],
-                        'frame': neighbor['frame'],
-                        'geometry': neighbor['wkt'],
-                    }
-                ],
-                'job_type': job.job_type,
-            })
+            products.append(format_product(job, event, [granule, neighbor]))
 
     else:
         pass
