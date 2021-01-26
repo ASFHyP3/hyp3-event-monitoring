@@ -127,12 +127,7 @@ def add_product_for_processing(granule, event, process):
         # TODO handle unknown job type
     for product in products:
         table.put_item(
-            {
-                'product_id': product.job_id,
-                'event_id': event['event_id'],
-                'granules': product.job_parameters['granules'],
-                'job_type': product.job_type,
-            }
+            products
         )
 
 
