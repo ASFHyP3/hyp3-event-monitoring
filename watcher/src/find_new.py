@@ -103,6 +103,7 @@ def add_product_for_processing(granule, event, process):
     products = []
     if process['job_type'] == 'RTC_GAMMA':
         job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
+        print(job.job_id)
         products.append(format_product(job, event, [granule]))
     # elif process['job_type'] == 'INSAR_GAMMA':
     #     for depth in (1, 2):
@@ -122,7 +123,6 @@ def lambda_handler(event, context):
     processes = get_processes()
     for event in events:
         granules = get_unprocessed_granules(event)
-        print(granules)
         for granule in granules:
             for process in processes:
                 add_product_for_processing(granule, event, process)

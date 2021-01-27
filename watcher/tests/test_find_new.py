@@ -2,6 +2,7 @@ import json
 from os import environ
 from uuid import uuid4
 
+import requests
 from hyp3_sdk.util import AUTH_URL
 import responses
 
@@ -294,8 +295,9 @@ def test_add_product_for_processing(tables):
     products = tables.product_table.scan()['Items']
     assert len(products) == 1
 
+
 @responses.activate
-def test_lambda_hanlder(tables):
+def test_lambda_handler(tables):
     mock_events = [
         {
             'event_id': 'event_id1',
@@ -331,14 +333,7 @@ def test_lambda_hanlder(tables):
                 'path': 123,
                 'frame': 456,
                 'wkt': 'someWKT',
-            },
-            {
-                'granuleName': 'granule4',
-                'startTime': '2020-01-01T00:00:00Z',
-                'path': 456,
-                'frame': 789,
-                'wkt': 'someWKT',
-            },
+            }
         ]
     }
     responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_response))
@@ -375,40 +370,25 @@ def test_lambda_hanlder(tables):
     ]
     for item in mock_products:
         tables.product_table.put_item(Item=item)
+    responses.add(responses.GET, AUTH_URL)
 
-    hyp3_repsonses = [
-        {
-            'jobs': [
-                {
-                    'job_id': 'foo',
-                    'job_type': 'RTC_GAMMA',
-                    'name': 'event_id1',
-                    'request_time': '2020-06-04T18:00:03+00:00',
-                    'user_id': 'some_user',
-                    'status_code': 'PENDING',
-                }
-            ],
-        },
-        {
-            'jobs': [
-                {
-                    'job_id': 'bar',
-                    'job_type': 'RTC_GAMMA',
-                    'name': 'event_id1',
-                    'request_time': '2020-06-04T18:00:03+00:00',
-                    'user_id': 'some_user',
-                    'status_code': 'PENDING',
-                }
-            ],
-        },
-    ]
-    for response in hyp3_repsonses:
-        responses.add(responses.GET, AUTH_URL)
-        responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(response))
+    hyp3_response = {
+        'jobs': [
+            {
+                'job_id': 'foo',
+                'job_type': 'RTC_GAMMA',
+                'name': 'event_id1',
+                'request_time': '2020-06-04T18:00:03+00:00',
+                'user_id': 'some_user',
+                'status_code': 'PENDING',
+            }
+        ],
+    }
+    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_response))
 
     find_new.lambda_handler(None, None)
 
     products = tables.product_table.scan()['Items']
 
-    assert len(products) == 4
-    assert products == {}
+    assert len(products) == 3
+    assert [product['granules'][0]['granule_name'] for product in products] == ['granule1', 'granule2', 'granule3']
