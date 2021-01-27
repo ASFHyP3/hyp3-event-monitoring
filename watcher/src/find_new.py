@@ -6,7 +6,6 @@ from boto3.dynamodb.conditions import Key
 from hyp3_sdk import HyP3
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
-HYP3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
 DB = boto3.resource('dynamodb')
 
 
@@ -15,16 +14,16 @@ def get_events():
     response = table.scan()
     events = response['Items']
     while 'LastEvaluatedKey' in response:
-        response = table.query(
+        response = table.scan(
             ExclusiveStartKey=response['LastEvaluatedKey'],
         )
         events.extend(response['Items'])
     return events
 
 
-def get_existing_products(event):
+def get_existing_products(event_id):
     table = DB.Table(environ['PRODUCT_TABLE'])
-    key_expression = Key('event_id').eq(event['event_id'])
+    key_expression = Key('event_id').eq(event_id)
     response = table.query(KeyConditionExpression=key_expression)
     products = response['Items']
     while 'LastEvaluatedKey' in response:
@@ -48,13 +47,13 @@ def get_granules(event):
     }
     response = requests.get(SEARCH_URL, params=search_params)
     response.raise_for_status()
-    return [granule['granuleName'] for granule in response.json()['results']]
+    return response.json()['results']
 
 
 def get_unprocessed_granules(event):
     all_granules = get_granules(event)
-    processed_granules = [product['granules'][0] for product in get_existing_products(event)]
-    return [granule for granule in all_granules if granule not in processed_granules]
+    processed_granule_names = [product['granules'][0]['granule_name'] for product in get_existing_products(event['event_id'])]
+    return [granule for granule in all_granules if granule['granuleName'] not in processed_granule_names]
 
 
 def get_processes():
@@ -79,13 +78,13 @@ def get_insar_neighbor(granule_name, distance):
     return {}
 
 
-def get_granule_dict(granule):
+def format_granule(granule):
     return {
         'granule_name': granule['granuleName'],
-        'aquisition_date': granule['startTime'],
+        'acquisition_date': granule['startTime'],
         'path': granule['path'],
         'frame': granule['frame'],
-        'geometry': granule['wkt'],
+        'wkt': granule['wkt'],
     }
 
 
@@ -93,37 +92,37 @@ def format_product(job, event, granules):
     return {
         'product_id': job.job_id,
         'event_id': event['event_id'],
-        'granules': [get_granule_dict(granule) for granule in granules],
+        'granules': [format_granule(granule) for granule in granules],
         'job_type': job.job_type,
     }
 
 
 def add_product_for_processing(granule, event, process):
+    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     table = DB.Table(environ['PRODUCT_TABLE'])
     products = []
     if process['job_type'] == 'RTC_GAMMA':
-        job = HYP3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
+        job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
         products.append(format_product(job, event, [granule]))
-    elif process['job_type'] == 'INSAR_GAMMA':
-        for depth in (1, 2):
-            neighbor = get_insar_neighbor(granule, depth)
-            job = HYP3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])
-            products.append(format_product(job, event, [granule, neighbor]))
-
+    # elif process['job_type'] == 'INSAR_GAMMA':
+    #     for depth in (1, 2):
+    #         neighbor = get_insar_neighbor(granule, depth)
+    #         job = hyp3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])
+    #         products.append(format_product(job, event, [granule, neighbor]))
     else:
         pass
         # TODO handle unknown job type
+    print(products)
     for product in products:
-        table.put_item(
-            product
-        )
+        table.put_item(Item=product)
 
 
 def lambda_handler(event, context):
     events = get_events()
     processes = get_processes()
     for event in events:
-        granules = get_unprocessed_granules(event['event_id'])
+        granules = get_unprocessed_granules(event)
+        print(granules)
         for granule in granules:
             for process in processes:
                 add_product_for_processing(granule, event, process)
