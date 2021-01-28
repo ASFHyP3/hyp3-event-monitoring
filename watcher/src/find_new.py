@@ -1,82 +1,122 @@
 from os import environ
-from uuid import uuid4
-
-import requests
-from hyp3_sdk import HyP3
 
 import boto3
+import requests
 from boto3.dynamodb.conditions import Key
+from hyp3_sdk import HyP3
 
-DB = boto3.resource('dynamodb')
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
+DB = boto3.resource('dynamodb')
 
 
-def get_actionable_subscriptions():
-    table = DB.Table(environ['SUBSCRIPTION_TABLE'])
+def get_events():
+    table = DB.Table(environ['EVENT_TABLE'])
     response = table.scan()
-    return response['Items']  # TODO implement filtering
+    events = response['Items']
+    while 'LastEvaluatedKey' in response:
+        response = table.scan(
+            ExclusiveStartKey=response['LastEvaluatedKey'],
+        )
+        events.extend(response['Items'])
+    return events
 
 
-def get_existing_products(subscription_name):
+def get_existing_products(event_id):
     table = DB.Table(environ['PRODUCT_TABLE'])
-
-    key_expression = Key('subscription_name').eq(subscription_name)
-    products = table.query(KeyConditionExpression=key_expression)
-    return products['Items']
-
-
-def get_rtc_granules(subscription):
-    response = requests.get(SEARCH_URL,
-                            params={
-                                'intersectsWith': subscription.get('geometry'),
-                                'start': subscription['start'],
-                                'end': subscription['end'],
-                                'beamMode': 'IW',
-                                'platform': 'SENTINEL-1',
-                                'processingLevel': subscription['file_types'],
-                                'output': 'jsonlite',
-                            })
-    response.raise_for_status()
-    return [granule['granuleName'] for granule in response.json()['results']]
+    key_expression = Key('event_id').eq(event_id)
+    response = table.query(KeyConditionExpression=key_expression)
+    products = response['Items']
+    while 'LastEvaluatedKey' in response:
+        response = table.query(
+            KeyConditionExpression=key_expression,
+            ExclusiveStartKey=response['LastEvaluatedKey'],
+        )
+        products.extend(response['Items'])
+    return products
 
 
-def submit_product_to_hyp3(subscription, granules):
-    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDLUSERNAME'], password=environ['EDLPASSWORD'])
-
-    if subscription['processing_type'] == 'RTC_GAMMA':
-        return hyp3.submit_rtc_job(granules[0],
-                                   name=subscription['subscription_name'],
-                                   dem_matching=subscription['processing_parameters']['dem_matching'],
-                                   include_dem=subscription['processing_parameters']['include_dem'],
-                                   include_inc_map=subscription['processing_parameters']['include_inc_map'],
-                                   include_scattering_area=subscription['processing_parameters'][
-                                       'include_scattering_area'],
-                                   radiometry=subscription['processing_parameters']['radiometry'],
-                                   resolution=float(subscription['processing_parameters']['resolution']),
-                                   scale=subscription['processing_parameters']['scale'],
-                                   speckle_filter=subscription['processing_parameters']['speckle_filter']
-                                   )
-
-
-def add_product_for_subscription(subscription, granules):
-    table = DB.Table(environ['PRODUCT_TABLE'])
-    product = submit_product_to_hyp3(subscription, granules)
-    product_item = {
-        'product_id': str(uuid4()),
-        'subscription_name': subscription['subscription_name'],
-        'hyp3_id': product.job_id,
-        'status_code': 'PENDING',
-        'granules': granules,
+def get_granules(event):
+    search_params = {
+        'intersectsWith': event.get('wkt'),
+        'start': event['processing_timeframe']['start'],
+        'end': event['processing_timeframe'].get('end'),
+        'beamMode': 'IW',
+        'platform': 'SENTINEL-1',
+        'processingLevel': 'SLC',
+        'output': 'jsonlite',
     }
-    table.put_item(Item=product_item)
+    response = requests.get(SEARCH_URL, params=search_params)
+    response.raise_for_status()
+    return response.json()['results']
+
+
+def get_unprocessed_granules(event):
+    all_granules = get_granules(event)
+    processed_granule_names = [product['granules'][0]['granule_name'] for product in get_existing_products(event['event_id'])]
+    return [granule for granule in all_granules if granule['granuleName'] not in processed_granule_names]
+
+
+def get_processes():
+    return [
+        {
+            'job_type': 'RTC_GAMMA',
+            'parameters': {
+                'dem_matching': False,
+                'include_dem': False,
+                'include_inc_map': False,
+                'include_scattering_area': False,
+                'radiometry': 'gamma0',
+                'resolution': 30,
+                'scale': 'power',
+                'speckle_filter': False,
+            },
+        },
+    ]
+
+
+def format_granule(granule):
+    return {
+        'granule_name': granule['granuleName'],
+        'acquisition_date': granule['startTime'],
+        'path': granule['path'],
+        'frame': granule['frame'],
+        'wkt': granule['wkt'],
+    }
+
+
+def format_product(job, event, granules):
+    return {
+        'product_id': job.job_id,
+        'event_id': event['event_id'],
+        'granules': [format_granule(granule) for granule in granules],
+        'job_type': job.job_type,
+    }
+
+
+def add_product_for_processing(granule, event, process):
+    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
+    table = DB.Table(environ['PRODUCT_TABLE'])
+    products = []
+    if process['job_type'] == 'RTC_GAMMA':
+        job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
+        print(job.job_id)
+        products.append(format_product(job, event, [granule]))
+    else:
+        raise NotImplementedError('Unknown or unimplemented process job type')
+    print(products)
+    for product in products:
+        table.put_item(Item=product)
+
+
+def handle_event(event, processes):
+    granules = get_unprocessed_granules(event)
+    for granule in granules:
+        for process in processes:
+            add_product_for_processing(granule, event, process)
 
 
 def lambda_handler(event, context):
-    subscriptions = get_actionable_subscriptions()
-    for subscription in subscriptions:
-        products = get_existing_products(subscription['subscription_name'])
-        if subscription['processing_type'] == 'RTC_GAMMA':
-            granules = get_rtc_granules(subscription)
-            for granule in granules:
-                if granule not in [product['granules'] for product in products]:
-                    add_product_for_subscription(subscription, [granule])
+    events = get_events()
+    processes = get_processes()
+    for event in events:
+        handle_event(event, processes)

@@ -1,294 +1,400 @@
 import json
-from decimal import Decimal
-from os import path, environ
+from os import environ
 from uuid import uuid4
 
-import boto3
-import pytest
-import responses
+import requests
 from hyp3_sdk.util import AUTH_URL
-
-import yaml
-from moto import mock_dynamodb2
+import responses
 
 import find_new
 
 
-def get_table_properties_from_template(resource_name):
-    yaml.SafeLoader.add_multi_constructor('!', lambda loader, suffix, node: None)
-    template_file = path.join(path.dirname(__file__), '../../cloudformation.yml')
-    with open(template_file, 'r') as f:
-        template = yaml.safe_load(f)
-    table_properties = template['Resources'][resource_name]['Properties']
-    return table_properties
-
-
-@pytest.fixture
-def tables():
-    with mock_dynamodb2():
-        find_new.DB = boto3.resource('dynamodb')
-
-        class Tables:
-            subscription_table = find_new.DB.create_table(
-                TableName=environ['SUBSCRIPTION_TABLE'],
-                **get_table_properties_from_template('SubscriptionTable'),
-            )
-            product_table = find_new.DB.create_table(
-                TableName=environ['PRODUCT_TABLE'],
-                **get_table_properties_from_template('ProductTable')
-            )
-
-        tables = Tables()
-        yield tables
-
-
-def test_get_active_subscriptions(tables):
-    sub1 = {
-        'subscription_name': 'test_sub1',
-        'geometry': 'POLYGON((-155.826 19.6816,-155.763 19.6816,-155.763 19.7337,-155.826 19.7337,-155.826 19.6816))',
-        'file_types': ['SLC'],
-        'start': '2020-03-04',
-        'end': '2020-03-05',
-        'processing_type': 'RTC_GAMMA',
-        'processing_parameters': {
+def test_get_events(tables):
+    mock_events = [
+        {
+            'event_id': 'event1',
+            'processing_timeframe': {
+                'start': '2020-01-01T00:00:00+00:00',
+                'end': '2020-01-02T00:00:00+00:00'
+            },
+            'wkt': 'foo'
+        },
+        {
+            'event_id': 'event2',
+            'processing_timeframe': {
+                'start': '2020-01-01T00:00:00+00:00',
+            },
+            'wkt': 'foo'
+        },
+        {
+            'event_id': 'event3',
+            'processing_timeframe': {
+                'start': '2020-01-01T00:00:00+00:00',
+                'end': '2020-01-02T00:00:00+00:00'
+            },
+            'wkt': 'foo',
+            'some_extra_parameter': 'foobar',
         }
-    }
-    tables.subscription_table.put_item(Item=sub1)
+    ]
+    for item in mock_events:
+        tables.event_table.put_item(Item=item)
 
-    res = find_new.get_actionable_subscriptions()
-    assert res == [sub1]
+    response = find_new.get_events()
 
-    sub2 = {
-        'subscription_name': 'test_sub2',
-        'geometry': 'POLYGON((-155.826 19.6816,-155.763 19.6816,-155.763 19.7337,-155.826 19.7337,-155.826 19.6816))',
-        'file_types': ['SLC'],
-        'start': '2020-03-04',
-        'end': '2020-03-05',
-        'processing_type': 'RTC_GAMMA',
-        'processing_parameters': {
-        }
-    }
-    sub3 = {
-        'subscription_name': 'test_sub3',
-        'geometry': 'POLYGON((-155.826 19.6816,-155.763 19.6816,-155.763 19.7337,-155.826 19.7337,-155.826 19.6816))',
-        'file_types': ['SLC'],
-        'start': '2020-03-04',
-        'end': '2020-03-05',
-        'processing_type': 'RTC_GAMMA',
-        'processing_parameters': {
-        }
-    }
-    tables.subscription_table.put_item(Item=sub2)
-    tables.subscription_table.put_item(Item=sub3)
-
-    res = find_new.get_actionable_subscriptions()
-    assert res == [sub1, sub2, sub3]
+    assert response == mock_events
 
 
 def test_get_existing_products(tables):
-    subscription_name1 = 'testsub1'
-    subscription_name2 = 'testsub2'
+    event_id1 = 'test1'
+    event_id2 = 'test2'
     products = [
         {
             'product_id': str(uuid4()),
-            'subscription_name': subscription_name1,
-            'hyp3_id': 'hyp3-id-1',
+            'event_id': event_id1,
             'status_code': 'PENDING'
         },
         {
             'product_id': str(uuid4()),
-            'subscription_name': subscription_name1,
-            'hyp3_id': 'hyp3-id-2',
+            'event_id': event_id1,
             'status_code': 'RUNNING'
         },
         {
             'product_id': str(uuid4()),
-            'subscription_name': subscription_name2,
-            'hyp3_id': 'hyp3-id-3',
+            'event_id': event_id1,
+            'status_code': 'RUNNING'
+        },
+        {
+            'product_id': str(uuid4()),
+            'event_id': event_id2,
             'status_code': 'SUCCEEDED'
         },
         {
             'product_id': str(uuid4()),
-            'subscription_name': subscription_name2,
-            'hyp3_id': 'hyp3-id-4',
+            'event_id': event_id2,
             'status_code': 'FAILED'
         },
     ]
     for item in products:
         tables.product_table.put_item(Item=item)
 
-    res = find_new.get_existing_products(subscription_name1)
-    assert len(res) == 2
+    res = find_new.get_existing_products(event_id1)
+    assert len(res) == 3
     assert products[0] in res
     assert products[1] in res
+    assert products[2] in res
 
-    res = find_new.get_existing_products(subscription_name2)
+    res = find_new.get_existing_products(event_id2)
 
     assert len(res) == 2
-    assert products[2] in res
     assert products[3] in res
+    assert products[4] in res
 
 
 @responses.activate
-def test_get_rtc_granules():
-    response_json = {
-        'results':
-            [
-                {'granuleName': 'granule1'},
-                {'granuleName': 'granule2'},
-                {'granuleName': 'granule3'},
-                {'granuleName': 'granule4'},
+def test_get_granules():
+    mock_response = {
+        'results': [
+            {
+                'granuleName': 'granule1',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'granule2',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 456,
+                'frame': 789,
+                'wkt': 'someWKT',
+            },
+        ]
+    }
+    responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_response))
+
+    event = {
+        'event_id': 'foo',
+        'processing_timeframe': {
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
+        },
+        'wkt': 'someWKT',
+    }
+    response = find_new.get_granules(event)
+
+    assert response == mock_response['results']
+
+
+@responses.activate
+def test_get_unproccesed_granules(tables):
+    mock_response = {
+        'results': [
+            {
+                'granuleName': 'granule1',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'granule2',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 456,
+                'frame': 789,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'granule3',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'granule4',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 456,
+                'frame': 789,
+                'wkt': 'someWKT',
+            },
+        ]
+    }
+    responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_response))
+
+    event = {
+        'event_id': 'event_id1',
+        'processing_timeframe': {
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
+        },
+        'wkt': 'someWKT',
+    }
+
+    mock_products = [
+        {
+            'product_id': str(uuid4()),
+            'event_id': 'event_id1',
+            'status_code': 'PENDING',
+            'granules': [
+                {
+                    'granule_name': 'granule1',
+                    'aquisition_date': '2020-01-01T00:00:00+00:00',
+                    'path': 123,
+                    'frame': 456,
+                    'wkt': 'someWKT',
+                }
             ]
+        },
+        {
+            'product_id': str(uuid4()),
+            'event_id': 'event_id1',
+            'status_code': 'RUNNING',
+            'granules': [
+                {
+                    'granule_name': 'granule2',
+                    'aquisition_date': '2020-01-01T00:00:00+00:00',
+                    'path': 456,
+                    'frame': 789,
+                    'wkt': 'someWKT',
+                },
+            ]
+        },
+    ]
+    for item in mock_products:
+        tables.product_table.put_item(Item=item)
+
+    response = find_new.get_unprocessed_granules(event)
+
+    assert response == mock_response['results'][2:]
+
+
+def test_format_granule():
+    search_api_granule = {
+        'granuleName': 'granule1',
+        'startTime': '2020-01-01T00:00:00+00:00',
+        'path': 456,
+        'frame': 789,
+        'wkt': 'someWKT',
     }
-    responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(response_json))
 
-    subscription = {
-        'geometry': 'UNVALIDATED_WKT',
-        'start': 'UNVALIDATED_TIME',
-        'end': 'UNVALIDATED_TIME',
-        'file_types': 'UNVALIDATED_FILE_TYPE',
+    assert find_new.format_granule(search_api_granule) == {
+        'granule_name': 'granule1',
+        'acquisition_date': '2020-01-01T00:00:00+00:00',
+        'path': 456,
+        'frame': 789,
+        'wkt': 'someWKT',
     }
 
-    res = find_new.get_rtc_granules(subscription)
 
-    assert res == ['granule1', 'granule2', 'granule3', 'granule4']
+def test_format_product():
+    class MockJob:
+        job_id = 'foo'
+        job_type = 'BAR'
+
+    job = MockJob()
+    event = {
+        'event_id': 'event_id1',
+        'processing_timeframe': {
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
+        },
+        'wkt': 'someWKT',
+    }
+    granules = [
+        {
+            'granuleName': 'granule1',
+            'startTime': '2020-01-01T00:00:00+00:00',
+            'path': 123,
+            'frame': 456,
+            'wkt': 'someWKT',
+        }
+    ]
+    assert find_new.format_product(job, event, granules) == {
+        'product_id': 'foo',
+        'event_id': 'event_id1',
+        'granules': [
+            {
+                'granule_name': 'granule1',
+                'acquisition_date': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            }
+        ],
+        'job_type': 'BAR'
+    }
 
 
 @responses.activate
-def test_submit_product_to_hyp3():
+def test_add_product_for_processing(tables):
     responses.add(responses.GET, AUTH_URL)
-    subscription = {
-        'subscription_name': 'subscription_name1',
-        'processing_type': 'RTC_GAMMA',
-        'processing_parameters': {
-            'dem_matching': False,
-            'include_dem': False,
-            'include_inc_map': False,
-            'include_scattering_area': False,
-            'radiometry': 'gamma0',
-            'resolution': Decimal(30),
-            'scale': 'power',
-            'speckle_filter': False,
-        }
+    event = {
+        'event_id': 'event_id1',
+        'processing_timeframe': {
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
+        },
+        'wkt': 'someWKT',
     }
-    granules = ['granule1']
-
-    response_json = {
+    hyp3_response = {
         'jobs': [
             {
                 'job_id': 'foo',
                 'job_type': 'RTC_GAMMA',
-                'name': subscription['subscription_name'],
-                'request_time': '2020-06-04T18:00:03+00:00',
-                'status_code': 'PENDING',
-                'user_id': 'some_user',
-
-            }
-        ],
-    }
-
-    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(response_json))
-
-    res = find_new.submit_product_to_hyp3(subscription, granules)
-
-    assert res.job_id == 'foo'
-
-
-def test_add_product_for_subscription(tables):
-    responses.add(responses.GET, AUTH_URL)
-    subscription = {
-        'subscription_name': 'subscription_name1',
-        'processing_type': 'RTC_GAMMA',
-        'processing_parameters': {
-            'dem_matching': False,
-            'include_dem': False,
-            'include_inc_map': False,
-            'include_scattering_area': False,
-            'radiometry': 'gamma0',
-            'resolution': Decimal(30),
-            'scale': 'power',
-            'speckle_filter': False,
-        }
-    }
-    response_json = {
-        'jobs': [
-            {
-                'job_id': 'foo',
-                'job_type': 'RTC_GAMMA',
-                'name': subscription['subscription_name'],
+                'name': event['event_id'],
                 'request_time': '2020-06-04T18:00:03+00:00',
                 'user_id': 'some_user',
                 'status_code': 'PENDING',
             }
         ],
     }
-    granules = ['granule1']
-    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(response_json))
+    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_response))
+    granule = {
+        'granuleName': 'granule1',
+        'startTime': '2020-01-01T00:00:00+00:00',
+        'path': 123,
+        'frame': 456,
+        'wkt': 'someWKT',
+    }
+    find_new.add_product_for_processing(granule, event, find_new.get_processes()[0])
 
-    find_new.add_product_for_subscription(subscription, granules)
-
-    table_contents = tables.product_table.scan()['Items']
-
-    assert len(table_contents) == 1
-    assert table_contents[0]['hyp3_id'] == 'foo'
-    assert table_contents[0]['granules'] == granules
+    products = tables.product_table.scan()['Items']
+    assert len(products) == 1
 
 
 @responses.activate
 def test_lambda_handler(tables):
-    responses.add(responses.GET, AUTH_URL)
-    subscriptions = [
+    mock_events = [
         {
-            'subscription_name': 'subscription_name1',
-            'geometry': 'UNVALIDATED WKT',
-            'processing_type': 'RTC_GAMMA',
-            'processing_parameters': {
-                'dem_matching': False,
-                'include_dem': False,
-                'include_inc_map': False,
-                'include_scattering_area': False,
-                'radiometry': 'gamma0',
-                'resolution': 30,
-                'scale': 'power',
-                'speckle_filter': False,
+            'event_id': 'event_id1',
+            'processing_timeframe': {
+                'start': '2020-01-01T00:00:00+00:00',
+                'end': '2020-01-02T00:00:00+00:00'
             },
-            'start': '2020-03-04',
-            'end': '2020-03-05',
-            'file_types': ['SLC'],
+            'wkt': 'foo'
         },
     ]
+    for item in mock_events:
+        tables.event_table.put_item(Item=item)
 
-    for item in subscriptions:
-        tables.subscription_table.put_item(Item=item)
-
-    search_json = {
-        'results':
-            [
-                {'granuleName': 'granule1'},
-                {'granuleName': 'granule2'},
-                {'granuleName': 'granule3'},
-                {'granuleName': 'granule4'},
-            ]
+    mock_response = {
+        'results': [
+            {
+                'granuleName': 'granule1',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'granule2',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 456,
+                'frame': 789,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'granule3',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            }
+        ]
     }
+    responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_response))
 
-    hyp3_json = {
+    mock_products = [
+        {
+            'product_id': str(uuid4()),
+            'event_id': 'event_id1',
+            'status_code': 'PENDING',
+            'granules': [
+                {
+                    'granule_name': 'granule1',
+                    'aquisition_date': '2020-01-01T00:00:00+00:00',
+                    'path': 123,
+                    'frame': 456,
+                    'wkt': 'someWKT',
+                }
+            ]
+        },
+        {
+            'product_id': str(uuid4()),
+            'event_id': 'event_id1',
+            'status_code': 'RUNNING',
+            'granules': [
+                {
+                    'granule_name': 'granule2',
+                    'aquisition_date': '2020-01-01T00:00:00+00:00',
+                    'path': 456,
+                    'frame': 789,
+                    'wkt': 'someWKT',
+                },
+            ]
+        },
+    ]
+    for item in mock_products:
+        tables.product_table.put_item(Item=item)
+    responses.add(responses.GET, AUTH_URL)
+
+    hyp3_response = {
         'jobs': [
             {
                 'job_id': 'foo',
                 'job_type': 'RTC_GAMMA',
-                'name': 'subscription_name1',
+                'name': 'event_id1',
                 'request_time': '2020-06-04T18:00:03+00:00',
                 'user_id': 'some_user',
                 'status_code': 'PENDING',
             }
         ],
     }
-
-    responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(search_json))
-    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_json))
+    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_response))
 
     find_new.lambda_handler(None, None)
 
     products = tables.product_table.scan()['Items']
-    assert len(products) == 4
-    assert [granule['granules'][0] for granule in products] == ['granule1', 'granule2', 'granule3', 'granule4']
+
+    assert len(products) == 3
+    assert [product['granules'][0]['granule_name'] for product in products] == ['granule1', 'granule2', 'granule3']
