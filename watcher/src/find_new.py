@@ -1,8 +1,10 @@
+from datetime import timezone
 from os import environ
 
 import boto3
 import requests
 from boto3.dynamodb.conditions import Key
+from dateutil import parser
 from hyp3_sdk import HyP3
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
@@ -75,9 +77,10 @@ def get_processes():
 
 
 def format_granule(granule):
+    acquisition_date = parser.parse(granule['startTime']).replace(tzinfo=timezone.utc).isoformat(timespec='seconds')
     return {
         'granule_name': granule['granuleName'],
-        'acquisition_date': granule['startTime'],
+        'acquisition_date': acquisition_date,
         'path': granule['path'],
         'frame': granule['frame'],
         'wkt': granule['wkt'],
@@ -90,6 +93,8 @@ def format_product(job, event, granules):
         'event_id': event['event_id'],
         'granules': [format_granule(granule) for granule in granules],
         'job_type': job.job_type,
+        'processing_date': job.request_time.isoformat(timespec='seconds'),
+        'status_code': job.status_code,
     }
 
 
