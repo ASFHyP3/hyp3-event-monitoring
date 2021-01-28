@@ -74,10 +74,6 @@ def get_processes():
     ]
 
 
-def get_insar_neighbor(granule_name, distance):
-    return {}
-
-
 def format_granule(granule):
     return {
         'granule_name': granule['granuleName'],
@@ -105,24 +101,22 @@ def add_product_for_processing(granule, event, process):
         job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
         print(job.job_id)
         products.append(format_product(job, event, [granule]))
-    # elif process['job_type'] == 'INSAR_GAMMA':
-    #     for depth in (1, 2):
-    #         neighbor = get_insar_neighbor(granule, depth)
-    #         job = hyp3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])
-    #         products.append(format_product(job, event, [granule, neighbor]))
     else:
-        pass
-        # TODO handle unknown job type
+        raise NotImplementedError('Unknown or unimplemented process job type')
     print(products)
     for product in products:
         table.put_item(Item=product)
+
+
+def handle_event(event, processes):
+    granules = get_unprocessed_granules(event)
+    for granule in granules:
+        for process in processes:
+            add_product_for_processing(granule, event, process)
 
 
 def lambda_handler(event, context):
     events = get_events()
     processes = get_processes()
     for event in events:
-        granules = get_unprocessed_granules(event)
-        for granule in granules:
-            for process in processes:
-                add_product_for_processing(granule, event, process)
+        handle_event(event, processes)
