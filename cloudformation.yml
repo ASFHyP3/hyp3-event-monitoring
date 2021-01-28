@@ -35,7 +35,7 @@ Resources:
         - AttributeName: product_id
           KeyType: RANGE
       GlobalSecondaryIndexes:
-        - IndexName: processing_date
+        - IndexName: status_code
           KeySchema:
             - AttributeName: status_code
               KeyType: HASH
