@@ -3,6 +3,7 @@ from os import environ
 from uuid import uuid4
 
 import requests
+from dateutil import parser
 from hyp3_sdk.util import AUTH_URL
 import responses
 
@@ -211,7 +212,7 @@ def test_get_unproccesed_granules(tables):
 def test_format_granule():
     search_api_granule = {
         'granuleName': 'granule1',
-        'startTime': '2020-01-01T00:00:00+00:00',
+        'startTime': '2020-01-01T00:00:00.000000',
         'path': 456,
         'frame': 789,
         'wkt': 'someWKT',
@@ -230,6 +231,8 @@ def test_format_product():
     class MockJob:
         job_id = 'foo'
         job_type = 'BAR'
+        status_code = 'PENDING'
+        request_time = parser.parse('2020-01-01T00:00:00+00:00')
 
     job = MockJob()
     event = {
@@ -261,7 +264,9 @@ def test_format_product():
                 'wkt': 'someWKT',
             }
         ],
-        'job_type': 'BAR'
+        'job_type': 'BAR',
+        'status_code': 'PENDING',
+        'processing_date': '2020-01-01T00:00:00+00:00'
     }
 
 
@@ -300,6 +305,8 @@ def test_add_product_for_processing(tables):
 
     products = tables.product_table.scan()['Items']
     assert len(products) == 1
+    assert products[0]['processing_date'] == '2020-06-04T18:00:03+00:00'
+    assert products[0]['status_code'] == 'PENDING'
 
 
 @responses.activate

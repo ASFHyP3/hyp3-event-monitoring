@@ -34,10 +34,23 @@ Resources:
           KeyType: HASH
         - AttributeName: product_id
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: status_code
+          KeySchema:
+            - AttributeName: status_code
+              KeyType: HASH
+            - AttributeName: processing_date
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       AttributeDefinitions:
         - AttributeName: event_id
           AttributeType: S
         - AttributeName: product_id
+          AttributeType: S
+        - AttributeName: status_code
+          AttributeType: S
+        - AttributeName: processing_date
           AttributeType: S
   Watcher:
     Type: AWS::CloudFormation::Stack
