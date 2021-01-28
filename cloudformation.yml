@@ -25,6 +25,7 @@ Resources:
       AttributeDefinitions:
         - AttributeName: event_id
           AttributeType: S
+
   ProductTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -52,10 +53,11 @@ Resources:
           AttributeType: S
         - AttributeName: processing_date
           AttributeType: S
-  Watcher:
+
+  FindNew:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: watcher/cloudformation.yml
+      TemplateURL: find_new/cloudformation.yml
       Parameters:
         HyP3URL: !Ref HyP3URL
         EventTable: !Ref EventTable

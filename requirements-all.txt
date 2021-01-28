@@ -3,4 +3,4 @@ pytest
 moto
 responses==0.12.0
 pyYAML
--r watcher/requirements.txt
+-r find_new/requirements.txt

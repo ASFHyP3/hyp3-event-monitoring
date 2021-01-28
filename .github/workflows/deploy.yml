@@ -42,7 +42,7 @@ jobs:
       - name: install dependencies and render templates
         run: |
           pip install --upgrade pip
-          pip install -r watcher/requirements.txt -t watcher/src
+          pip install -r find_new/requirements.txt -t find_new/src
 
       - name: Package and deploy
         run: |
