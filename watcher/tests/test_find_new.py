@@ -14,23 +14,23 @@ def test_get_events(tables):
         {
             'event_id': 'event1',
             'processing_timeframe': {
-                'start': '2020-01-01T00:00:00Z',
-                'end': '2020-01-02T00:00:00Z'
+                'start': '2020-01-01T00:00:00+00:00',
+                'end': '2020-01-02T00:00:00+00:00'
             },
             'wkt': 'foo'
         },
         {
             'event_id': 'event2',
             'processing_timeframe': {
-                'start': '2020-01-01T00:00:00Z',
+                'start': '2020-01-01T00:00:00+00:00',
             },
             'wkt': 'foo'
         },
         {
             'event_id': 'event3',
             'processing_timeframe': {
-                'start': '2020-01-01T00:00:00Z',
-                'end': '2020-01-02T00:00:00Z'
+                'start': '2020-01-01T00:00:00+00:00',
+                'end': '2020-01-02T00:00:00+00:00'
             },
             'wkt': 'foo',
             'some_extra_parameter': 'foobar',
@@ -60,6 +60,11 @@ def test_get_existing_products(tables):
         },
         {
             'product_id': str(uuid4()),
+            'event_id': event_id1,
+            'status_code': 'RUNNING'
+        },
+        {
+            'product_id': str(uuid4()),
             'event_id': event_id2,
             'status_code': 'SUCCEEDED'
         },
@@ -73,15 +78,16 @@ def test_get_existing_products(tables):
         tables.product_table.put_item(Item=item)
 
     res = find_new.get_existing_products(event_id1)
-    assert len(res) == 2
+    assert len(res) == 3
     assert products[0] in res
     assert products[1] in res
+    assert products[2] in res
 
     res = find_new.get_existing_products(event_id2)
 
     assert len(res) == 2
-    assert products[2] in res
     assert products[3] in res
+    assert products[4] in res
 
 
 @responses.activate
@@ -90,14 +96,14 @@ def test_get_granules():
         'results': [
             {
                 'granuleName': 'granule1',
-                'startTime': '2020-01-01T00:00:00Z',
+                'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 123,
                 'frame': 456,
                 'wkt': 'someWKT',
             },
             {
                 'granuleName': 'granule2',
-                'startTime': '2020-01-01T00:00:00Z',
+                'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 456,
                 'frame': 789,
                 'wkt': 'someWKT',
@@ -109,8 +115,8 @@ def test_get_granules():
     event = {
         'event_id': 'foo',
         'processing_timeframe': {
-            'start': '2020-01-01T00:00:00Z',
-            'end': '2020-01-02T00:00:00Z',
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
         },
         'wkt': 'someWKT',
     }
@@ -125,28 +131,28 @@ def test_get_unproccesed_granules(tables):
         'results': [
             {
                 'granuleName': 'granule1',
-                'startTime': '2020-01-01T00:00:00Z',
+                'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 123,
                 'frame': 456,
                 'wkt': 'someWKT',
             },
             {
                 'granuleName': 'granule2',
-                'startTime': '2020-01-01T00:00:00Z',
+                'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 456,
                 'frame': 789,
                 'wkt': 'someWKT',
             },
             {
                 'granuleName': 'granule3',
-                'startTime': '2020-01-01T00:00:00Z',
+                'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 123,
                 'frame': 456,
                 'wkt': 'someWKT',
             },
             {
                 'granuleName': 'granule4',
-                'startTime': '2020-01-01T00:00:00Z',
+                'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 456,
                 'frame': 789,
                 'wkt': 'someWKT',
@@ -158,8 +164,8 @@ def test_get_unproccesed_granules(tables):
     event = {
         'event_id': 'event_id1',
         'processing_timeframe': {
-            'start': '2020-01-01T00:00:00Z',
-            'end': '2020-01-02T00:00:00Z',
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
         },
         'wkt': 'someWKT',
     }
@@ -172,7 +178,7 @@ def test_get_unproccesed_granules(tables):
             'granules': [
                 {
                     'granule_name': 'granule1',
-                    'aquisition_date': '2020-01-01T00:00:00Z',
+                    'aquisition_date': '2020-01-01T00:00:00+00:00',
                     'path': 123,
                     'frame': 456,
                     'wkt': 'someWKT',
@@ -186,7 +192,7 @@ def test_get_unproccesed_granules(tables):
             'granules': [
                 {
                     'granule_name': 'granule2',
-                    'aquisition_date': '2020-01-01T00:00:00Z',
+                    'aquisition_date': '2020-01-01T00:00:00+00:00',
                     'path': 456,
                     'frame': 789,
                     'wkt': 'someWKT',
@@ -205,7 +211,7 @@ def test_get_unproccesed_granules(tables):
 def test_format_granule():
     search_api_granule = {
         'granuleName': 'granule1',
-        'startTime': '2020-01-01T00:00:00Z',
+        'startTime': '2020-01-01T00:00:00+00:00',
         'path': 456,
         'frame': 789,
         'wkt': 'someWKT',
@@ -213,7 +219,7 @@ def test_format_granule():
 
     assert find_new.format_granule(search_api_granule) == {
         'granule_name': 'granule1',
-        'acquisition_date': '2020-01-01T00:00:00Z',
+        'acquisition_date': '2020-01-01T00:00:00+00:00',
         'path': 456,
         'frame': 789,
         'wkt': 'someWKT',
@@ -229,15 +235,15 @@ def test_format_product():
     event = {
         'event_id': 'event_id1',
         'processing_timeframe': {
-            'start': '2020-01-01T00:00:00Z',
-            'end': '2020-01-02T00:00:00Z',
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
         },
         'wkt': 'someWKT',
     }
     granules = [
         {
             'granuleName': 'granule1',
-            'startTime': '2020-01-01T00:00:00Z',
+            'startTime': '2020-01-01T00:00:00+00:00',
             'path': 123,
             'frame': 456,
             'wkt': 'someWKT',
@@ -249,7 +255,7 @@ def test_format_product():
         'granules': [
             {
                 'granule_name': 'granule1',
-                'acquisition_date': '2020-01-01T00:00:00Z',
+                'acquisition_date': '2020-01-01T00:00:00+00:00',
                 'path': 123,
                 'frame': 456,
                 'wkt': 'someWKT',
@@ -265,8 +271,8 @@ def test_add_product_for_processing(tables):
     event = {
         'event_id': 'event_id1',
         'processing_timeframe': {
-            'start': '2020-01-01T00:00:00Z',
-            'end': '2020-01-02T00:00:00Z',
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
         },
         'wkt': 'someWKT',
     }
@@ -285,7 +291,7 @@ def test_add_product_for_processing(tables):
     responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_response))
     granule = {
         'granuleName': 'granule1',
-        'startTime': '2020-01-01T00:00:00Z',
+        'startTime': '2020-01-01T00:00:00+00:00',
         'path': 123,
         'frame': 456,
         'wkt': 'someWKT',
@@ -302,8 +308,8 @@ def test_lambda_handler(tables):
         {
             'event_id': 'event_id1',
             'processing_timeframe': {
-                'start': '2020-01-01T00:00:00Z',
-                'end': '2020-01-02T00:00:00Z'
+                'start': '2020-01-01T00:00:00+00:00',
+                'end': '2020-01-02T00:00:00+00:00'
             },
             'wkt': 'foo'
         },
@@ -315,21 +321,21 @@ def test_lambda_handler(tables):
         'results': [
             {
                 'granuleName': 'granule1',
-                'startTime': '2020-01-01T00:00:00Z',
+                'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 123,
                 'frame': 456,
                 'wkt': 'someWKT',
             },
             {
                 'granuleName': 'granule2',
-                'startTime': '2020-01-01T00:00:00Z',
+                'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 456,
                 'frame': 789,
                 'wkt': 'someWKT',
             },
             {
                 'granuleName': 'granule3',
-                'startTime': '2020-01-01T00:00:00Z',
+                'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 123,
                 'frame': 456,
                 'wkt': 'someWKT',
@@ -346,7 +352,7 @@ def test_lambda_handler(tables):
             'granules': [
                 {
                     'granule_name': 'granule1',
-                    'aquisition_date': '2020-01-01T00:00:00Z',
+                    'aquisition_date': '2020-01-01T00:00:00+00:00',
                     'path': 123,
                     'frame': 456,
                     'wkt': 'someWKT',
@@ -360,7 +366,7 @@ def test_lambda_handler(tables):
             'granules': [
                 {
                     'granule_name': 'granule2',
-                    'aquisition_date': '2020-01-01T00:00:00Z',
+                    'aquisition_date': '2020-01-01T00:00:00+00:00',
                     'path': 456,
                     'frame': 789,
                     'wkt': 'someWKT',

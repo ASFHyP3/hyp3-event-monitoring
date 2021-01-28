@@ -1,4 +1,5 @@
-from os import path, environ
+from os import environ
+from pathlib import Path
 
 import boto3
 from moto import mock_dynamodb2
@@ -10,7 +11,7 @@ import find_new
 
 def get_table_properties_from_template(resource_name):
     yaml.SafeLoader.add_multi_constructor('!', lambda loader, suffix, node: None)
-    template_file = path.join(path.dirname(__file__), '../../cloudformation.yml')
+    template_file = Path(__file__).parent.parent.parent / 'cloudformation.yml'
     with open(template_file, 'r') as f:
         template = yaml.safe_load(f)
     table_properties = template['Resources'][resource_name]['Properties']
