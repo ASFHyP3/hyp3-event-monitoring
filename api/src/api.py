@@ -3,7 +3,7 @@ from decimal import Decimal
 from os import environ
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr, Key
 from flask import Flask, abort, jsonify
 from flask.json import JSONEncoder
 from flask_api.status import HTTP_404_NOT_FOUND
@@ -46,8 +46,11 @@ def query_event_by_id(event_id):
 
 def query_products_for_event(event_id):
     table = dynamodb.Table(environ['PRODUCT_TABLE'])
+
     key_expression = Key('event_id').eq(event_id)
-    response = table.query(KeyConditionExpression=key_expression)
+    filter_expression = Attr('status_code').eq('SUCCEEDED')
+    response = table.query(KeyConditionExpression=key_expression, FilterExpression=filter_expression)
+
     products = response['Items']
     while 'LastEvaluatedKey' in response:
         response = table.query(
@@ -62,9 +65,11 @@ def query_recent_products():
     table = dynamodb.Table(environ['PRODUCT_TABLE'])
     one_week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec='seconds')
     key_expression = Key('status_code').eq('SUCCEEDED') & Key('processing_date').gte(one_week_ago)
+    filter_expression = Attr('status_code').eq('SUCCEEDED')
     response = table.query(
         IndexName='status_code',
         KeyConditionExpression=key_expression,
+        FilterExpression=filter_expression,
     )
     return response['Items']
 

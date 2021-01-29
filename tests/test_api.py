@@ -1,35 +1,96 @@
+from datetime import datetime, timezone, timedelta
+from decimal import Decimal
+
 from flask_api import status
 
 from api import lambda_handler
 
 
-def test_events(client):
+def seed_data(tables):
+    events = [
+        {
+            'event_id': 'event1',
+            'decimal_value': Decimal(1.0)
+        },
+        {
+            'event_id': 'event2',
+        },
+    ]
+    for event in events:
+        tables.event_table.put_item(Item=event)
+
+    now = datetime.now(tz=timezone.utc)
+    products = [
+        {
+            'event_id': 'event2',
+            'product_id': 'product1',
+            'status_code': 'SUCCEEDED',
+            'processing_date': now.isoformat(timespec='seconds'),
+        },
+        {
+            'event_id': 'event2',
+            'product_id': 'product2',
+            'status_code': 'PENDING',
+            'processing_date': now.isoformat(timespec='seconds'),
+        },
+        {
+            'event_id': 'event2',
+            'product_id': 'product3',
+            'status_code': 'SUCCEEDED',
+            'processing_date': (now - timedelta(days=6, hours=23, minutes=59, seconds=59)).isoformat(timespec='seconds'),
+        },
+        {
+            'event_id': 'event2',
+            'product_id': 'product4',
+            'status_code': 'SUCCEEDED',
+            'processing_date': (now - timedelta(days=7, seconds=1)).isoformat(timespec='seconds'),
+        },
+    ]
+    for product in products:
+        tables.product_table.put_item(Item=product)
+
+
+def test_events(client, api_tables):
     response = client.get('/events')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json() == []
 
-    # TODO test with data
+    seed_data(api_tables)
+
+    response = client.get('/events')
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.get_json()) == 2
 
 
-def test_event_by_id(client):
-    response = client.get('/events/foo')
+def test_event_by_id(client, api_tables):
+    response = client.get('/events/event1')
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    # TODO event with no products
-    # TODO event with products
-    # TODO event with products where status_code != 'SUCCEEDED'
+    seed_data(api_tables)
+
+    response = client.get('/events/event1')
+    assert response.status_code == status.HTTP_200_OK
+    assert response.get_json()['event_id'] == 'event1'
+    assert response.get_json()['products'] == []
+
+    response = client.get('/events/event2')
+    assert response.status_code == status.HTTP_200_OK
+    assert response.get_json()['event_id'] == 'event2'
+    product_ids = [p['product_id'] for p in response.get_json()['products']]
+    assert sorted(product_ids) == ['product1', 'product3', 'product4']
 
 
-def test_recent_products(client):
+def test_recent_products(client, api_tables):
     response = client.get('/recent_products')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json() == []
 
-    # TODO product newer than 7 days
-    # TODO product newer than 7 days where status_code != 'SUCCEEDED'
-    # TODO product older than 7 days
+    seed_data(api_tables)
 
-    # TODO test DecimalEncoder?
+    response = client.get('/recent_products')
+    assert response.status_code == status.HTTP_200_OK
+    product_ids = [p['product_id'] for p in response.get_json()]
+    assert sorted(product_ids) == ['product1', 'product3']
 
 
 def test_cors(client):

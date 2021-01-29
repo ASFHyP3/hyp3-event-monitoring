@@ -58,6 +58,6 @@ def api_tables():
 
 
 @pytest.fixture
-def client(api_tables):
+def client():
     with api.app.test_client() as client:
         yield client
