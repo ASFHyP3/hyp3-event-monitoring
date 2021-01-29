@@ -3,29 +3,31 @@ from flask_api import status
 from api import lambda_handler
 
 
-def test_api(client):
+def test_events(client):
     response = client.get('/events')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json() == []
 
+    # TODO test with data
+
+
+def test_event_by_id(client):
     response = client.get('/events/foo')
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    # TODO event with no products
+    # TODO event with products
+    # TODO event with products where status_code != 'SUCCEEDED'
+
+
+def test_recent_products(client):
     response = client.get('/recent_products')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json() == []
 
-    # TODO test /events with data
-
-    # TODO test /events/foo with data
-        # TODO event with no products
-        # TODO event with products
-        # TODO event with products where status_code != 'SUCCEEDED'
-
-    # TODO test /recent_products with data
-        # TODO product newer than 7 days
-        # TODO product newer than 7 days where status_code != 'SUCCEEDED'
-        # TODO product older than 7 days
+    # TODO product newer than 7 days
+    # TODO product newer than 7 days where status_code != 'SUCCEEDED'
+    # TODO product older than 7 days
 
     # TODO test DecimalEncoder?
 
