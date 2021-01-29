@@ -6,6 +6,7 @@ from moto import mock_dynamodb2
 import pytest
 import yaml
 
+import api
 import find_new
 
 
@@ -35,3 +36,9 @@ def tables():
 
         tables = Tables()
         yield tables
+
+
+@pytest.fixture
+def client():
+    with api.app.test_client() as client:
+        yield client

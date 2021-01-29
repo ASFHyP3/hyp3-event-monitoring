@@ -64,3 +64,11 @@ Resources:
         ProductTable: !Ref ProductTable
         EDLUsername: !Ref EDLUsername
         EDLPassword: !Ref EDLPassword
+
+  Api:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: api/cloudformation.yml
+      Parameters:
+        EventTable: !Ref EventTable
+        ProductTable: !Ref ProductTable

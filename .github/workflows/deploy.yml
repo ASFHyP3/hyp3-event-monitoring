@@ -43,6 +43,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r find_new/requirements.txt -t find_new/src
+          pip install -r api/requirements.txt -t api/src
 
       - name: Package and deploy
         run: |
