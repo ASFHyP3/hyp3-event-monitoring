@@ -65,11 +65,9 @@ def query_recent_products():
     table = dynamodb.Table(environ['PRODUCT_TABLE'])
     one_week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec='seconds')
     key_expression = Key('status_code').eq('SUCCEEDED') & Key('processing_date').gte(one_week_ago)
-    filter_expression = Attr('status_code').eq('SUCCEEDED')
     response = table.query(
         IndexName='status_code',
         KeyConditionExpression=key_expression,
-        FilterExpression=filter_expression,
     )
     return response['Items']
 
