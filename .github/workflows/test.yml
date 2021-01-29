@@ -18,7 +18,7 @@ jobs:
           python -m pip install -r requirements-all.txt
       - name: run pytest
         env:
-          PYTHONPATH: find_new/src
+          PYTHONPATH: find_new/src:api/src
         run: |
           export $(xargs < tests/cfg.env)
           pytest tests/

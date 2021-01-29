@@ -4,3 +4,4 @@ moto
 responses==0.12.0
 pyYAML
 -r find_new/requirements.txt
+-r api/requirements.txt

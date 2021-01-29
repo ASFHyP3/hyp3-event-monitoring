@@ -6,6 +6,7 @@ from moto import mock_dynamodb2
 import pytest
 import yaml
 
+import api
 import find_new
 
 
@@ -35,3 +36,28 @@ def tables():
 
         tables = Tables()
         yield tables
+
+
+@pytest.fixture
+def api_tables():
+    with mock_dynamodb2():
+        api.dynamodb = boto3.resource('dynamodb')
+
+        class Tables:
+            event_table = api.dynamodb.create_table(
+                TableName=environ['EVENT_TABLE'],
+                **get_table_properties_from_template('EventTable'),
+            )
+            product_table = api.dynamodb.create_table(
+                TableName=environ['PRODUCT_TABLE'],
+                **get_table_properties_from_template('ProductTable')
+            )
+
+        tables = Tables()
+        yield tables
+
+
+@pytest.fixture
+def api_client():
+    with api.app.test_client() as client:
+        yield client
