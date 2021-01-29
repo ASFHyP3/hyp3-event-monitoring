@@ -6,6 +6,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from flask import Flask, abort, jsonify
 from flask.json import JSONEncoder
+from flask_api.status import HTTP_404_NOT_FOUND
 from flask_cors import CORS
 from serverless_wsgi import handle_request
 
@@ -59,10 +60,10 @@ def query_products_for_event(event_id):
 
 def query_recent_products():
     table = dynamodb.Table(environ['PRODUCT_TABLE'])
-    one_week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    one_week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec='seconds')
     key_expression = Key('status_code').eq('SUCCEEDED') & Key('processing_date').gte(one_week_ago)
     response = table.query(
-        IndexName='processing_date',
+        IndexName='status_code',
         KeyConditionExpression=key_expression,
     )
     return response['Items']
@@ -79,7 +80,7 @@ def get_event_by_id(event_id):
     try:
         event = query_event_by_id(event_id)
     except ValueError:
-        abort(404)
+        abort(HTTP_404_NOT_FOUND)
     event['products'] = query_products_for_event(event_id)
     return jsonify(event)
 
