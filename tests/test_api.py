@@ -24,6 +24,7 @@ def test_api(client):
 
     # TODO test /recent_products with data
         # TODO product newer than 7 days
+        # TODO product newer than 7 days where status_code != 'SUCCEEDED'
         # TODO product older than 7 days
 
     # TODO test DecimalEncoder?
@@ -39,15 +40,18 @@ def test_cors(client):
     assert 'Access-Control-Allow-Credentials' not in response.headers
 
 
-def test_lambda_handler(api_tables):
+def test_lambda_handler():
     event = {
-        'path': '/events',
-        'httpMethod': 'GET',
-        'body': '',
+        'version': '2.0',
+        'rawPath': '/',
+        'requestContext': {
+            'http': {
+                'method': 'GET',
+            },
+        },
         'headers': {},
-        'requestContext': {},
     }
     response = lambda_handler(event, None)
-    assert response['statusCode'] == status.HTTP_200_OK
-    assert response['headers']['Content-Type'] == 'application/json'
+    assert response['statusCode'] == status.HTTP_404_NOT_FOUND
+    assert response['headers']['Content-Type'] == 'text/html; charset=utf-8'
     assert response['isBase64Encoded'] is False
