@@ -76,6 +76,7 @@ Resources:
     Properties:
       TemplateURL: harvest_products/cloudformation.yml
       Parameters:
+        ProductBucket: !Ref ProductBucket
         HyP3URL: !Ref HyP3URL
         ProductTable: !Ref ProductTable
         EDLUsername: !Ref EDLUsername

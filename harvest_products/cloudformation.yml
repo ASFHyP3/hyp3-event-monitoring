@@ -1,6 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
+  ProductBucket:
+    Type: String
+
   ProductTable:
     Type: String
 
@@ -45,6 +48,7 @@ Resources:
     Properties:
       Environment:
         Variables:
+          BUCKET_NAME: !Ref ProductBucket
           EVENT_TABLE: !Ref EventTable
           PRODUCT_TABLE: !Ref ProductTable
           HYP3_URL: !Ref HyP3URL
