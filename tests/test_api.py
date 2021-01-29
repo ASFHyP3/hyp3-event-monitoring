@@ -37,7 +37,7 @@ def seed_data(tables):
             'event_id': 'event2',
             'product_id': 'product3',
             'status_code': 'SUCCEEDED',
-            'processing_date': (now - timedelta(days=6, hours=23, minutes=59, seconds=59)).isoformat(timespec='seconds'),
+            'processing_date': (now - timedelta(days=7, seconds=-1)).isoformat(timespec='seconds'),
         },
         {
             'event_id': 'event2',
@@ -50,54 +50,54 @@ def seed_data(tables):
         tables.product_table.put_item(Item=product)
 
 
-def test_events(client, api_tables):
-    response = client.get('/events')
+def test_events(api_client, api_tables):
+    response = api_client.get('/events')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json() == []
 
     seed_data(api_tables)
 
-    response = client.get('/events')
+    response = api_client.get('/events')
     assert response.status_code == status.HTTP_200_OK
     assert len(response.get_json()) == 2
 
 
-def test_event_by_id(client, api_tables):
-    response = client.get('/events/event1')
+def test_event_by_id(api_client, api_tables):
+    response = api_client.get('/events/event1')
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
     seed_data(api_tables)
 
-    response = client.get('/events/event1')
+    response = api_client.get('/events/event1')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json()['event_id'] == 'event1'
     assert response.get_json()['products'] == []
 
-    response = client.get('/events/event2')
+    response = api_client.get('/events/event2')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json()['event_id'] == 'event2'
     product_ids = [p['product_id'] for p in response.get_json()['products']]
     assert sorted(product_ids) == ['product1', 'product3', 'product4']
 
 
-def test_recent_products(client, api_tables):
-    response = client.get('/recent_products')
+def test_recent_products(api_client, api_tables):
+    response = api_client.get('/recent_products')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json() == []
 
     seed_data(api_tables)
 
-    response = client.get('/recent_products')
+    response = api_client.get('/recent_products')
     assert response.status_code == status.HTTP_200_OK
     product_ids = [p['product_id'] for p in response.get_json()]
     assert sorted(product_ids) == ['product1', 'product3']
 
 
-def test_cors(client):
-    response = client.get('/')
+def test_cors(api_client):
+    response = api_client.get('/')
     assert response.headers['Access-Control-Allow-Origin'] == '*'
 
-    response = client.get('/', headers={'Origin': 'https://sarviews-hazards.alaska.edu'})
+    response = api_client.get('/', headers={'Origin': 'https://sarviews-hazards.alaska.edu'})
     assert response.headers['Access-Control-Allow-Origin'] == 'https://sarviews-hazards.alaska.edu'
 
 
