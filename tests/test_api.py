@@ -33,11 +33,9 @@ def test_api(client):
 def test_cors(client):
     response = client.get('/')
     assert response.headers['Access-Control-Allow-Origin'] == '*'
-    assert 'Access-Control-Allow-Credentials' not in response.headers
 
     response = client.get('/', headers={'Origin': 'https://sarviews-hazards.alaska.edu'})
     assert response.headers['Access-Control-Allow-Origin'] == 'https://sarviews-hazards.alaska.edu'
-    assert 'Access-Control-Allow-Credentials' not in response.headers
 
 
 def test_lambda_handler():
