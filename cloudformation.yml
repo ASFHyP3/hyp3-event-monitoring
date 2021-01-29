@@ -64,7 +64,6 @@ Resources:
         ProductTable: !Ref ProductTable
         EDLUsername: !Ref EDLUsername
         EDLPassword: !Ref EDLPassword
-
   Api:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -72,3 +71,12 @@ Resources:
       Parameters:
         EventTable: !Ref EventTable
         ProductTable: !Ref ProductTable
+  HarvestProducts:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: harvest_products/cloudformation.yml
+      Parameters:
+        HyP3URL: !Ref HyP3URL
+        ProductTable: !Ref ProductTable
+        EDLUsername: !Ref EDLUsername
+        EDLPassword: !Ref EDLPassword
