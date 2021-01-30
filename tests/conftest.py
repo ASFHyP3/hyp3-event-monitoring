@@ -2,10 +2,10 @@ from os import environ
 from pathlib import Path
 
 import boto3
-from botocore.stub import Stubber
-from moto import mock_dynamodb2
 import pytest
 import yaml
+from botocore.stub import Stubber
+from moto import mock_dynamodb2
 
 import api
 import find_new
@@ -89,4 +89,3 @@ def s3_stubber():
 def api_client():
     with api.app.test_client() as client:
         yield client
-

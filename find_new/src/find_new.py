@@ -54,7 +54,8 @@ def get_granules(event):
 
 def get_unprocessed_granules(event):
     all_granules = get_granules(event)
-    processed_granule_names = [product['granules'][0]['granule_name'] for product in get_existing_products(event['event_id'])]
+    existing_products = get_existing_products(event['event_id'])
+    processed_granule_names = [product['granules'][0]['granule_name'] for product in existing_products]
     return [granule for granule in all_granules if granule['granuleName'] not in processed_granule_names]
 
 
