@@ -47,7 +47,7 @@ Resources:
                 Resource: !Sub "arn:aws:s3:::*/*"
               - Effect: Allow
                 Action:
-                  - s3:GetObject
+                  - s3:PutObject
                 Resource: !Sub "arn:aws:s3:::${ProductBucket}/*"
 
   Lambda:
