@@ -2,12 +2,14 @@ from os import environ
 from pathlib import Path
 
 import boto3
+from botocore.stub import Stubber
 from moto import mock_dynamodb2
 import pytest
 import yaml
 
 import api
 import find_new
+import harvest_products
 
 
 def get_table_properties_from_template(resource_name):
@@ -58,6 +60,33 @@ def api_tables():
 
 
 @pytest.fixture
+def harvester_tables():
+    with mock_dynamodb2():
+        harvest_products.DB = boto3.resource('dynamodb')
+
+        class Tables:
+            event_table = harvest_products.DB.create_table(
+                TableName=environ['EVENT_TABLE'],
+                **get_table_properties_from_template('EventTable'),
+            )
+            product_table = harvest_products.DB.create_table(
+                TableName=environ['PRODUCT_TABLE'],
+                **get_table_properties_from_template('ProductTable')
+            )
+
+        tables = Tables()
+        yield tables
+
+
+@pytest.fixture
+def s3_stubber():
+    with Stubber(harvest_products.S3.meta.client) as stubber:
+        yield stubber
+        stubber.assert_no_pending_responses()
+
+
+@pytest.fixture
 def api_client():
     with api.app.test_client() as client:
         yield client
+

@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  EventTable:
+  ProductBucket:
     Type: String
 
   ProductTable:
@@ -39,26 +39,30 @@ Resources:
                 Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
               - Effect: Allow
                 Action:
-                  - dynamodb:Scan
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${EventTable}*"
-              - Effect: Allow
-                Action:
                   - dynamodb:PutItem
                   - dynamodb:Query
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductTable}*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: "arn:aws:s3:::*/*"
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${ProductBucket}/*"
 
   Lambda:
     Type: AWS::Lambda::Function
     Properties:
       Environment:
         Variables:
+          BUCKET_NAME: !Ref ProductBucket
           EVENT_TABLE: !Ref EventTable
           PRODUCT_TABLE: !Ref ProductTable
           HYP3_URL: !Ref HyP3URL
           EDL_USERNAME: !Ref EDLUsername
           EDL_PASSWORD: !Ref EDLPassword
       Code: src/
-      Handler: find_new.lambda_handler
+      Handler: harvest_products.lambda_handler
       MemorySize: 128
       Role: !GetAtt Role.Arn
       Runtime: python3.8
@@ -74,7 +78,7 @@ Resources:
   Schedule:
     Type: AWS::Events::Rule
     Properties:
-      ScheduleExpression: rate(1 day)
+      ScheduleExpression: rate(1 hour)
       Targets:
         - Arn: !GetAtt Lambda.Arn
           Id: lambda

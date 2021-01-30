@@ -44,6 +44,7 @@ jobs:
           pip install --upgrade pip
           pip install -r find_new/requirements.txt -t find_new/src
           pip install -r api/requirements.txt -t api/src
+          pip install -r harvest_products/requirements.txt -t harvest_products/src
 
       - name: Package and deploy
         run: |
