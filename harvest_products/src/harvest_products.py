@@ -31,10 +31,6 @@ def harvest(product, job):
     }
 
 
-def is_succeeded(product):
-    return product['status_code'] == "SUCCEEDED"
-
-
 def update_product(product):
     table = DB.Table(environ['PRODUCT_TABLE'])
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])

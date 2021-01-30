@@ -59,7 +59,7 @@ Resources:
           EDL_PASSWORD: !Ref EDLPassword
       Code: src/
       Handler: find_new.lambda_handler
-      MemorySize: 3008
+      MemorySize: 128
       Role: !GetAtt Role.Arn
       Runtime: python3.8
       Timeout: 900

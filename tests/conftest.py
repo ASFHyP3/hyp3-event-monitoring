@@ -65,11 +65,11 @@ def harvester_tables():
         harvest_products.DB = boto3.resource('dynamodb')
 
         class Tables:
-            event_table = api.dynamodb.create_table(
+            event_table = harvest_products.DB.create_table(
                 TableName=environ['EVENT_TABLE'],
                 **get_table_properties_from_template('EventTable'),
             )
-            product_table = api.dynamodb.create_table(
+            product_table = harvest_products.DB.create_table(
                 TableName=environ['PRODUCT_TABLE'],
                 **get_table_properties_from_template('ProductTable')
             )

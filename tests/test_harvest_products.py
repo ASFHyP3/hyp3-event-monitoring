@@ -8,7 +8,7 @@ from hyp3_sdk.util import AUTH_URL
 import harvest_products
 
 
-def test_get_products(harvester_tables):
+def test_get_incomplete_products(harvester_tables):
     mock_products = [
         {
             'event_id': '1',
@@ -44,20 +44,21 @@ def test_get_products(harvester_tables):
 def test_harvest(harvester_tables, s3_stubber):
     product = {
         'event_id': '1',
-        'product_id': 'foo',
+        'product_id': 'source_prefix',
         'granules': [],
         'status_code': 'PENDING',
         'processing_date': '2020-01-01T00:00:00+00:00'
     }
 
-    class MockJob():
+    class MockJob:
         files = [
-            {'filename': 'product.zip',
-             's3': {
-                 'bucket': 'BUCKET',
-                 'key': 'foo/product.zip',
-             },
-             },
+            {
+                'filename': 'product.zip',
+                's3': {
+                    'bucket': 'sourceBucket',
+                    'key': 'source_prefix/product.zip',
+                },
+            },
         ]
         browse_images = [
             'BROWSE_IMAGE_URL',
@@ -67,27 +68,27 @@ def test_harvest(harvester_tables, s3_stubber):
         ]
 
     params = {
-        'Bucket': 'BUCKET',
-        'Key': 'foo/product.zip',
+        'Bucket': 'sourceBucket',
+        'Key': 'source_prefix/product.zip',
     }
     s3_response = {
         'ContentLength': 123
     }
     s3_stubber.add_response(method='head_object', expected_params=params, service_response=s3_response)
+
     params = {
         'Bucket': environ['BUCKET_NAME'],
-        'Key': '1/foo/product.zip',
+        'Key': '1/source_prefix/product.zip',
         'CopySource': {
-            'Bucket': 'BUCKET',
-            'Key': 'foo/product.zip'
+            'Bucket': 'sourceBucket',
+            'Key': 'source_prefix/product.zip'
         },
     }
-    s3_response = {
-    }
-    s3_stubber.add_response(method='copy_object', expected_params=params, service_response=s3_response)
+    s3_stubber.add_response(method='copy_object', expected_params=params, service_response={})
+
     params = {
         'Bucket': environ['BUCKET_NAME'],
-        'Key': '1/foo/product.zip',
+        'Key': '1/source_prefix/product.zip',
     }
     s3_response = {
         'ContentLength': 123
@@ -101,7 +102,7 @@ def test_harvest(harvester_tables, s3_stubber):
         'thumbnail_url': 'THUMBNAIL_IMAGE_URL',
         'product_name': 'product.zip',
         'product_size': 123,
-        'product_url': f'https://{environ["BUCKET_NAME"]}.s3.amazonaws.com/1/foo/product.zip'
+        'product_url': f'https://{environ["BUCKET_NAME"]}.s3.amazonaws.com/1/source_prefix/product.zip'
     }
 
 
@@ -113,7 +114,7 @@ def test_update_product(harvester_tables):
         'status_code': 'PENDING',
         'processing_date': '2020-01-01T00:00:00+00:00'
     }
-    responses.add(responses.GET, AUTH_URL)
+
     hyp3_repsonse = {
         'job_id': 'foo',
         'job_type': 'RTC_GAMMA',
@@ -132,9 +133,10 @@ def test_update_product(harvester_tables):
             },
         ],
     }
+    responses.add(responses.GET, AUTH_URL)
     responses.add(responses.GET, environ['HYP3_URL'] + '/jobs/foo', json.dumps(hyp3_repsonse))
 
-    def mock_harvest(foo, bar):
+    def mock_harvest(input_product, job):
         return {
             'browse_url': 'BROWSE_IMAGE_URL',
             'thumbnail_url': 'THUMBNAIL_IMAGE_URL',
@@ -151,23 +153,3 @@ def test_update_product(harvester_tables):
 
     assert updated_product['status_code'] == 'SUCCEEDED'
     assert updated_product['files'] == mock_harvest(None, None)
-
-
-def test_is_succeeded():
-    product = {
-        'event_id': '1',
-        'product_id': str(uuid4()),
-        'granules': [],
-        'status_code': 'SUCCEEDED',
-        'processing_date': '2020-01-01T00:00:00+00:00'
-    }
-    assert harvest_products.is_succeeded(product) is True
-
-    product = {
-        'event_id': '1',
-        'product_id': str(uuid4()),
-        'granules': [],
-        'status_code': 'PENDING',
-        'processing_date': '2020-01-01T00:00:00+00:00'
-    }
-    assert harvest_products.is_succeeded(product) is False
