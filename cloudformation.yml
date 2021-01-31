@@ -27,7 +27,7 @@ Resources:
     Properties:
       LoggingConfiguration:
         DestinationBucketName: !Ref LogBucket
-        LogFilePrefix: s3-access-logs/
+        LogFilePrefix: s3-access-logs/product-bucket/
       MetricsConfigurations:
         - Id: EntireBucket
       PublicAccessBlockConfiguration:
