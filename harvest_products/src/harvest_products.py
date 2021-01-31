@@ -18,15 +18,12 @@ def harvest(product, job):
     destination_key = f'{product["event_id"]}/{product["product_id"]}/{product_name}'
     destination_bucket.copy(copy_source, destination_key)
 
-    product = S3.Object(destination_bucket.name, destination_key)
-
     return {
         'browse_url': job.browse_images[0],
         'thumbnail_url': job.thumbnail_images[0],
         'product_name': product_name,
-        'product_size': product.content_length,
-        'product_url': f'https://{destination_bucket.name}.s3.amazonaws.com/{destination_key}'
-
+        'product_size': job.files[0]['size'],
+        'product_url': f'https://{destination_bucket.name}.s3.amazonaws.com/{destination_key}',
     }
 
 
