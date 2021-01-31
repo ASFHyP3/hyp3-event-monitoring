@@ -2,7 +2,6 @@ from os import environ
 
 import boto3
 from boto3.dynamodb.conditions import Key
-
 from hyp3_sdk import HyP3
 
 DB = boto3.resource('dynamodb')

@@ -1,2 +1,3 @@
 hyp3-sdk
+python-dateutil
 requests

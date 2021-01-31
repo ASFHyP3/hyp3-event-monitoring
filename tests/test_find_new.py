@@ -2,10 +2,9 @@ import json
 from os import environ
 from uuid import uuid4
 
-import requests
+import responses
 from dateutil import parser
 from hyp3_sdk.util import AUTH_URL
-import responses
 
 import find_new
 
