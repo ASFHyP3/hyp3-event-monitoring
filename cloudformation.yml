@@ -28,6 +28,15 @@ Resources:
       LoggingConfiguration:
         DestinationBucketName: !Ref LogBucket
         LogFilePrefix: s3-access-logs/product-bucket/
+      LifecycleConfiguration:
+        Rules:
+          - Status: Enabled
+            Transitions:
+              - StorageClass: INTELLIGENT_TIERING
+                TransitionDate: "2021-01-01T00:00:00.000Z"
+          - Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
       MetricsConfigurations:
         - Id: EntireBucket
       PublicAccessBlockConfiguration:
