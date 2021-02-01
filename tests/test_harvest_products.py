@@ -54,6 +54,7 @@ def test_harvest(harvester_tables, s3_stubber):
         files = [
             {
                 'filename': 'product.zip',
+                'size': 123,
                 's3': {
                     'bucket': 'sourceBucket',
                     'key': 'source_prefix/product.zip',
@@ -85,15 +86,6 @@ def test_harvest(harvester_tables, s3_stubber):
         },
     }
     s3_stubber.add_response(method='copy_object', expected_params=params, service_response={})
-
-    params = {
-        'Bucket': environ['BUCKET_NAME'],
-        'Key': '1/source_prefix/product.zip',
-    }
-    s3_response = {
-        'ContentLength': 123
-    }
-    s3_stubber.add_response(method='head_object', expected_params=params, service_response=s3_response)
 
     files = harvest_products.harvest(product, MockJob())
 
