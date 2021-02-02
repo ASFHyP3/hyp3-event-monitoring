@@ -55,7 +55,7 @@ def test_get_products_by_status(tables):
         {
             'event_id': '1',
             'product_id': '2',
-            'status_code':'SUCCEEDED',
+            'status_code': 'SUCCEEDED',
             'processing_date': '2021-02-01T00:00:00+00:00',
         },
         {

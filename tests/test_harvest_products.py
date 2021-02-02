@@ -6,39 +6,6 @@ import responses
 from hyp3_sdk.util import AUTH_URL
 
 import harvest_products
-from database import database
-
-
-def test_get_incomplete_products(tables):
-    mock_products = [
-        {
-            'event_id': '1',
-            'product_id': str(uuid4()),
-            'granules': [],
-            'status_code': 'SUCCEEDED',
-            'processing_date': '2020-01-01T00:00:00+00:00'
-        },
-        {
-            'event_id': '2',
-            'product_id': str(uuid4()),
-            'granules': [],
-            'status_code': 'PENDING',
-            'processing_date': '2020-01-01T00:00:00+00:00'
-        },
-        {
-            'event_id': '3',
-            'product_id': str(uuid4()),
-            'granules': [],
-            'status_code': 'PENDING',
-            'processing_date': '2020-01-01T00:00:00+00:00'
-        },
-    ]
-    for product in mock_products:
-        tables.product_table.put_item(Item=product)
-
-    products = database.get_products_by_status('PENDING')
-
-    assert products == mock_products[1:]
 
 
 @responses.activate
