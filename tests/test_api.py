@@ -50,23 +50,23 @@ def seed_data(tables):
         tables.product_table.put_item(Item=product)
 
 
-def test_events(api_client, api_tables):
+def test_events(api_client, tables):
     response = api_client.get('/events')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json() == []
 
-    seed_data(api_tables)
+    seed_data(tables)
 
     response = api_client.get('/events')
     assert response.status_code == status.HTTP_200_OK
     assert len(response.get_json()) == 2
 
 
-def test_event_by_id(api_client, api_tables):
+def test_event_by_id(api_client, tables):
     response = api_client.get('/events/event1')
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    seed_data(api_tables)
+    seed_data(tables)
 
     response = api_client.get('/events/event1')
     assert response.status_code == status.HTTP_200_OK
@@ -80,12 +80,12 @@ def test_event_by_id(api_client, api_tables):
     assert sorted(product_ids) == ['product1', 'product3', 'product4']
 
 
-def test_recent_products(api_client, api_tables):
+def test_recent_products(api_client, tables):
     response = api_client.get('/recent_products')
     assert response.status_code == status.HTTP_200_OK
     assert response.get_json() == []
 
-    seed_data(api_tables)
+    seed_data(tables)
 
     response = api_client.get('/recent_products')
     assert response.status_code == status.HTTP_200_OK

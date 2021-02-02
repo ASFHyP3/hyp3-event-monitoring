@@ -18,7 +18,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install flake8 flake8-import-order flake8-blind-except flake8-builtins
 
-      - run: flake8 --max-line-length=120 --import-order-style=pycharm --statistics --application-import-names api,find_new,harvest_products
+      - run: flake8 --max-line-length=120 --import-order-style=pycharm --statistics --application-import-names api,database,find_new,harvest_products
 
   cfn-lint:
     runs-on: ubuntu-latest

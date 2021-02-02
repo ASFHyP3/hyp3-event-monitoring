@@ -1,6 +1,5 @@
 import json
 from os import environ
-from uuid import uuid4
 
 import responses
 from hyp3_sdk.util import AUTH_URL
@@ -8,40 +7,8 @@ from hyp3_sdk.util import AUTH_URL
 import harvest_products
 
 
-def test_get_incomplete_products(harvester_tables):
-    mock_products = [
-        {
-            'event_id': '1',
-            'product_id': str(uuid4()),
-            'granules': [],
-            'status_code': 'SUCCEEDED',
-            'processing_date': '2020-01-01T00:00:00+00:00'
-        },
-        {
-            'event_id': '2',
-            'product_id': str(uuid4()),
-            'granules': [],
-            'status_code': 'PENDING',
-            'processing_date': '2020-01-01T00:00:00+00:00'
-        },
-        {
-            'event_id': '3',
-            'product_id': str(uuid4()),
-            'granules': [],
-            'status_code': 'PENDING',
-            'processing_date': '2020-01-01T00:00:00+00:00'
-        },
-    ]
-    for product in mock_products:
-        harvester_tables.product_table.put_item(Item=product)
-
-    products = harvest_products.get_incomplete_products()
-
-    assert products == mock_products[1:]
-
-
 @responses.activate
-def test_harvest(harvester_tables, s3_stubber):
+def test_harvest(s3_stubber):
     product = {
         'event_id': '1',
         'product_id': 'source_prefix',
@@ -98,7 +65,7 @@ def test_harvest(harvester_tables, s3_stubber):
     }
 
 
-def test_update_product(harvester_tables):
+def test_update_product(tables):
     product = {
         'event_id': '1',
         'product_id': 'foo',
@@ -107,7 +74,7 @@ def test_update_product(harvester_tables):
         'processing_date': '2020-01-01T00:00:00+00:00'
     }
 
-    hyp3_repsonse = {
+    hyp3_response = {
         'job_id': 'foo',
         'job_type': 'RTC_GAMMA',
         'name': 'event_id1',
@@ -126,7 +93,7 @@ def test_update_product(harvester_tables):
         ],
     }
     responses.add(responses.GET, AUTH_URL)
-    responses.add(responses.GET, environ['HYP3_URL'] + '/jobs/foo', json.dumps(hyp3_repsonse))
+    responses.add(responses.GET, environ['HYP3_URL'] + '/jobs/foo', json.dumps(hyp3_response))
 
     def mock_harvest(input_product, job):
         return {
@@ -141,7 +108,7 @@ def test_update_product(harvester_tables):
 
     harvest_products.update_product(product)
 
-    updated_product = harvester_tables.product_table.scan()['Items'][0]
+    updated_product = tables.product_table.scan()['Items'][0]
 
     assert updated_product['status_code'] == 'SUCCEEDED'
     assert updated_product['files'] == mock_harvest(None, None)
