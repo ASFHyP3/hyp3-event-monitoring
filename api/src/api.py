@@ -42,7 +42,7 @@ def get_event_by_id(event_id):
 
 @app.route('/recent_products')
 def get_recent_products():
-    processed_since = (datetime.now(tz=timezone.utc) - timedelta(days=7))
+    processed_since = datetime.now(tz=timezone.utc) - timedelta(days=7)
     recent_products = database.get_products_by_status('SUCCEEDED', processed_since=processed_since)
     return jsonify(recent_products)
 
