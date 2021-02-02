@@ -75,7 +75,7 @@ def test_update_product(tables):
         'processing_date': '2020-01-01T00:00:00+00:00'
     }
 
-    hyp3_repsonse = {
+    hyp3_response = {
         'job_id': 'foo',
         'job_type': 'RTC_GAMMA',
         'name': 'event_id1',
@@ -94,7 +94,7 @@ def test_update_product(tables):
         ],
     }
     responses.add(responses.GET, AUTH_URL)
-    responses.add(responses.GET, environ['HYP3_URL'] + '/jobs/foo', json.dumps(hyp3_repsonse))
+    responses.add(responses.GET, environ['HYP3_URL'] + '/jobs/foo', json.dumps(hyp3_response))
 
     def mock_harvest(input_product, job):
         return {
