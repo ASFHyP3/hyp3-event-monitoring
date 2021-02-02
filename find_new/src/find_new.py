@@ -1,3 +1,4 @@
+import logging
 from datetime import timezone
 from os import environ
 
@@ -81,8 +82,8 @@ def add_product_for_processing(granule, event, process):
         products.append(format_product(job, event, [granule]))
     else:
         raise NotImplementedError('Unknown or unimplemented process job type')
-    print(products)
     for product in products:
+        logging.info(f'adding Product for processing: {product}')
         database.put_product(product)
 
 
