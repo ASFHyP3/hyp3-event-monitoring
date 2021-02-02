@@ -1,4 +1,3 @@
-import logging
 from datetime import timezone
 from os import environ
 
@@ -78,12 +77,11 @@ def add_product_for_processing(granule, event, process):
     products = []
     if process['job_type'] == 'RTC_GAMMA':
         job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
-        print(job.job_id)
         products.append(format_product(job, event, [granule]))
     else:
         raise NotImplementedError('Unknown or unimplemented process job type')
     for product in products:
-        logging.info(f'adding Product for processing: {product}')
+        print(f'adding Product for processing: {product}')
         database.put_product(product)
 
 
