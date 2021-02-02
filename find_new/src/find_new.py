@@ -73,20 +73,21 @@ def format_product(job, event, granules):
 
 
 def add_product_for_processing(granule, event, process):
+    print(f'submitting {process["job_type"]} for {granule}')
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     products = []
     if process['job_type'] == 'RTC_GAMMA':
         job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
-        print(job.job_id)
         products.append(format_product(job, event, [granule]))
     else:
         raise NotImplementedError('Unknown or unimplemented process job type')
-    print(products)
     for product in products:
+        print(f'adding product for processing: {product}')
         database.put_product(product)
 
 
 def handle_event(event, processes):
+    print(f'processing event: {event["event_id"]}')
     granules = get_unprocessed_granules(event)
     for granule in granules:
         for process in processes:
