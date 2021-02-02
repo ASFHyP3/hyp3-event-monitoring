@@ -17,7 +17,7 @@ def harvest(product, job):
     }
     product_name = job.files[0]['filename']
     destination_key = f'{product["event_id"]}/{product["product_id"]}/{product_name}'
-    logging.info(f'copying hyp3 product files for {product} to {destination_bucket}/{destination_key}')
+    logging.info(f'copying hyp3 product files for {product["product_id"]} to {destination_bucket}/{destination_key}')
     destination_bucket.copy(copy_source, destination_key)
 
     return {
