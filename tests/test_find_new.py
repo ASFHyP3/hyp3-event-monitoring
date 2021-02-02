@@ -6,6 +6,7 @@ import responses
 from dateutil import parser
 from hyp3_sdk.util import AUTH_URL
 
+import database
 import find_new
 
 
@@ -39,7 +40,7 @@ def test_get_events(tables):
     for item in mock_events:
         tables.event_table.put_item(Item=item)
 
-    response = find_new.get_events()
+    response = database.get_events()
 
     assert response == mock_events
 
@@ -77,13 +78,13 @@ def test_get_existing_products(tables):
     for item in products:
         tables.product_table.put_item(Item=item)
 
-    res = find_new.get_existing_products(event_id1)
+    res = database.get_products_for_event(event_id1)
     assert len(res) == 3
     assert products[0] in res
     assert products[1] in res
     assert products[2] in res
 
-    res = find_new.get_existing_products(event_id2)
+    res = database.get_products_for_event(event_id2)
 
     assert len(res) == 2
     assert products[3] in res

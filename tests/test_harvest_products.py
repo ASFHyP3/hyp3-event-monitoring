@@ -5,10 +5,11 @@ from uuid import uuid4
 import responses
 from hyp3_sdk.util import AUTH_URL
 
+import database
 import harvest_products
 
 
-def test_get_incomplete_products(harvester_tables):
+def test_get_incomplete_products(tables):
     mock_products = [
         {
             'event_id': '1',
@@ -33,15 +34,15 @@ def test_get_incomplete_products(harvester_tables):
         },
     ]
     for product in mock_products:
-        harvester_tables.product_table.put_item(Item=product)
+        tables.product_table.put_item(Item=product)
 
-    products = harvest_products.get_incomplete_products()
+    products = database.get_products_by_status('PENDING')
 
     assert products == mock_products[1:]
 
 
 @responses.activate
-def test_harvest(harvester_tables, s3_stubber):
+def test_harvest(s3_stubber):
     product = {
         'event_id': '1',
         'product_id': 'source_prefix',
@@ -106,7 +107,7 @@ def test_harvest(harvester_tables, s3_stubber):
     }
 
 
-def test_update_product(harvester_tables):
+def test_update_product(tables):
     product = {
         'event_id': '1',
         'product_id': 'foo',
@@ -149,7 +150,7 @@ def test_update_product(harvester_tables):
 
     harvest_products.update_product(product)
 
-    updated_product = harvester_tables.product_table.scan()['Items'][0]
+    updated_product = tables.product_table.scan()['Items'][0]
 
     assert updated_product['status_code'] == 'SUCCEEDED'
     assert updated_product['files'] == mock_harvest(None, None)

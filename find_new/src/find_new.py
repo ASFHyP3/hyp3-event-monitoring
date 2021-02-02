@@ -1,40 +1,13 @@
 from datetime import timezone
 from os import environ
 
-import boto3
 import requests
-from boto3.dynamodb.conditions import Key
 from dateutil import parser
 from hyp3_sdk import HyP3
 
+import database
+
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
-DB = boto3.resource('dynamodb')
-
-
-def get_events():
-    table = DB.Table(environ['EVENT_TABLE'])
-    response = table.scan()
-    events = response['Items']
-    while 'LastEvaluatedKey' in response:
-        response = table.scan(
-            ExclusiveStartKey=response['LastEvaluatedKey'],
-        )
-        events.extend(response['Items'])
-    return events
-
-
-def get_existing_products(event_id):
-    table = DB.Table(environ['PRODUCT_TABLE'])
-    key_expression = Key('event_id').eq(event_id)
-    response = table.query(KeyConditionExpression=key_expression)
-    products = response['Items']
-    while 'LastEvaluatedKey' in response:
-        response = table.query(
-            KeyConditionExpression=key_expression,
-            ExclusiveStartKey=response['LastEvaluatedKey'],
-        )
-        products.extend(response['Items'])
-    return products
 
 
 def get_granules(event):
@@ -54,7 +27,7 @@ def get_granules(event):
 
 def get_unprocessed_granules(event):
     all_granules = get_granules(event)
-    existing_products = get_existing_products(event['event_id'])
+    existing_products = database.get_products_for_event(event['event_id'])
     processed_granule_names = [product['granules'][0]['granule_name'] for product in existing_products]
     return [granule for granule in all_granules if granule['granuleName'] not in processed_granule_names]
 
@@ -101,7 +74,6 @@ def format_product(job, event, granules):
 
 def add_product_for_processing(granule, event, process):
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
-    table = DB.Table(environ['PRODUCT_TABLE'])
     products = []
     if process['job_type'] == 'RTC_GAMMA':
         job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
@@ -111,7 +83,7 @@ def add_product_for_processing(granule, event, process):
         raise NotImplementedError('Unknown or unimplemented process job type')
     print(products)
     for product in products:
-        table.put_item(Item=product)
+        database.put_product(product)
 
 
 def handle_event(event, processes):
@@ -122,7 +94,7 @@ def handle_event(event, processes):
 
 
 def lambda_handler(event, context):
-    events = get_events()
+    events = database.get_events()
     processes = get_processes()
     for event in events:
         handle_event(event, processes)

@@ -1,10 +1,10 @@
 from os import environ
 
 import boto3
-from boto3.dynamodb.conditions import Key
 from hyp3_sdk import HyP3
 
-DB = boto3.resource('dynamodb')
+import database
+
 S3 = boto3.resource('s3')
 
 
@@ -31,32 +31,16 @@ def harvest(product, job):
 
 
 def update_product(product):
-    table = DB.Table(environ['PRODUCT_TABLE'])
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     job = hyp3._get_job_by_id(product['product_id'])
     if job.complete():
         if job.succeeded():
             product['files'] = harvest(product, job)
         product['status_code'] = job.status_code
-        table.put_item(Item=product)
-
-
-def get_incomplete_products():
-    table = DB.Table(environ['PRODUCT_TABLE'])
-    key_expression = Key('status_code').eq('PENDING')
-    response = table.query(IndexName='status_code', KeyConditionExpression=key_expression)
-    products = response['Items']
-    while 'LastEvaluatedKey' in response:
-        response = table.query(
-            IndexName='status_code',
-            KeyConditionExpression=key_expression,
-            ExclusiveStartKey=response['LastEvaluatedKey'],
-        )
-        products.extend(response['Items'])
-    return products
+        database.put_product(product)
 
 
 def lambda_handler(event, context):
-    products = get_incomplete_products()
+    products = database.get_products_by_status('PENDING')
     for product in products:
         update_product(product)
