@@ -1,6 +1,5 @@
 import json
 from os import environ
-from uuid import uuid4
 
 import responses
 from hyp3_sdk.util import AUTH_URL
