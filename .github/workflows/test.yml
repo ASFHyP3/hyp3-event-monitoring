@@ -18,7 +18,7 @@ jobs:
           python -m pip install -r requirements-all.txt
       - name: run pytest
         env:
-          PYTHONPATH: find_new/src:api/src:harvest_products/src
+          PYTHONPATH: database:find_new/src:api/src:harvest_products/src
         run: |
           export $(xargs < tests/cfg.env)
           pytest tests/

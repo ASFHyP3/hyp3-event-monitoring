@@ -3,7 +3,7 @@ from os import environ
 from typing import List
 
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Attr, Key
 
 DB = boto3.resource('dynamodb')
 EVENT_TABLE = environ['EVENT_TABLE']
