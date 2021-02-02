@@ -16,7 +16,7 @@ def harvest(product, job):
     }
     product_name = job.files[0]['filename']
     destination_key = f'{product["event_id"]}/{product["product_id"]}/{product_name}'
-    print(f'copying hyp3 product files for {product["product_id"]} to {destination_bucket}/{destination_key}')
+    print(f'copying {product_name} to s3://{destination_bucket}/{destination_key}')
     destination_bucket.copy(copy_source, destination_key)
 
     return {
@@ -29,15 +29,15 @@ def harvest(product, job):
 
 
 def update_product(product):
+    print(f'Checking on product: {product}')
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     job = hyp3._get_job_by_id(product['product_id'])
     if job.complete():
+        print(f'product status is {job.status_code}')
         if job.succeeded():
             product['files'] = harvest(product, job)
-        else:
-            print(f'hyp3 job for product failed: {job.job_id}')
         product['status_code'] = job.status_code
-        print(f'updating complete product with files: {product}')
+        print(f'updating product table for: {product}')
         database.put_product(product)
 
 
