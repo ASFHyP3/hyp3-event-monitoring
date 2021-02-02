@@ -87,6 +87,7 @@ def add_product_for_processing(granule, event, process):
 
 
 def handle_event(event, processes):
+    print(f'processing event: {event["event_id"]}')
     granules = get_unprocessed_granules(event)
     for granule in granules:
         for process in processes:
