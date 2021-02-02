@@ -9,7 +9,7 @@ from moto import mock_dynamodb2
 
 import api
 import harvest_products
-from database import database
+from models import models
 
 
 def get_table_properties_from_template(resource_name):
@@ -24,14 +24,14 @@ def get_table_properties_from_template(resource_name):
 @pytest.fixture
 def tables():
     with mock_dynamodb2():
-        database.DB = boto3.resource('dynamodb')
+        models.DB = boto3.resource('dynamodb')
 
         class Tables:
-            event_table = database.DB.create_table(
+            event_table = models.DB.create_table(
                 TableName=environ['EVENT_TABLE'],
                 **get_table_properties_from_template('EventTable'),
             )
-            product_table = database.DB.create_table(
+            product_table = models.DB.create_table(
                 TableName=environ['PRODUCT_TABLE'],
                 **get_table_properties_from_template('ProductTable')
             )

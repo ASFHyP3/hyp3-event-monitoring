@@ -3,7 +3,7 @@ from os import environ
 import boto3
 from hyp3_sdk import HyP3
 
-from database import database
+from models import models
 
 S3 = boto3.resource('s3')
 
@@ -38,10 +38,10 @@ def update_product(product):
             product['files'] = harvest(product, job)
         product['status_code'] = job.status_code
         print(f'updating product table for: {product}')
-        database.put_product(product)
+        models.put_product(product)
 
 
 def lambda_handler(event, context):
-    products = database.get_products_by_status('PENDING')
+    products = models.get_products_by_status('PENDING')
     for product in products:
         update_product(product)

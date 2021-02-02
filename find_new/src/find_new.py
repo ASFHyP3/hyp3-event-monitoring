@@ -5,7 +5,7 @@ import requests
 from dateutil import parser
 from hyp3_sdk import HyP3
 
-from database import database
+from models import models
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
@@ -27,7 +27,7 @@ def get_granules(event):
 
 def get_unprocessed_granules(event):
     all_granules = get_granules(event)
-    existing_products = database.get_products_for_event(event['event_id'])
+    existing_products = models.get_products_for_event(event['event_id'])
     processed_granule_names = [product['granules'][0]['granule_name'] for product in existing_products]
     return [granule for granule in all_granules if granule['granuleName'] not in processed_granule_names]
 
@@ -83,7 +83,7 @@ def add_product_for_processing(granule, event, process):
         raise NotImplementedError('Unknown or unimplemented process job type')
     for product in products:
         print(f'adding product for processing: {product}')
-        database.put_product(product)
+        models.put_product(product)
 
 
 def handle_event(event, processes):
@@ -95,7 +95,7 @@ def handle_event(event, processes):
 
 
 def lambda_handler(event, context):
-    events = database.get_events()
+    events = models.get_events()
     processes = get_processes()
     for event in events:
         handle_event(event, processes)

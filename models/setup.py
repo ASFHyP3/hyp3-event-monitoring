@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='database',
+    name='models',
 
     license='BSD',
     include_package_data=True,

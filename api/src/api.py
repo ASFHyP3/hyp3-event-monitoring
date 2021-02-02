@@ -7,7 +7,7 @@ from flask_api.status import HTTP_404_NOT_FOUND
 from flask_cors import CORS
 from serverless_wsgi import handle_request
 
-from database import database
+from models import models
 
 
 class DecimalEncoder(JSONEncoder):
@@ -26,24 +26,24 @@ app.json_encoder = DecimalEncoder
 
 @app.route('/events')
 def get_events():
-    events = database.get_events()
+    events = models.get_events()
     return jsonify(events)
 
 
 @app.route('/events/<event_id>')
 def get_event_by_id(event_id):
     try:
-        event = database.get_event(event_id)
+        event = models.get_event(event_id)
     except ValueError:
         abort(HTTP_404_NOT_FOUND)
-    event['products'] = database.get_products_for_event(event_id, status_code='SUCCEEDED')
+    event['products'] = models.get_products_for_event(event_id, status_code='SUCCEEDED')
     return jsonify(event)
 
 
 @app.route('/recent_products')
 def get_recent_products():
     processed_since = datetime.now(tz=timezone.utc) - timedelta(days=7)
-    recent_products = database.get_products_by_status('SUCCEEDED', processed_since=processed_since)
+    recent_products = models.get_products_by_status('SUCCEEDED', processed_since=processed_since)
     return jsonify(recent_products)
 
 
