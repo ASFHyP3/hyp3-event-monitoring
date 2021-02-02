@@ -8,8 +8,8 @@ from botocore.stub import Stubber
 from moto import mock_dynamodb2
 
 import api
-import database
 import harvest_products
+from database import database
 
 
 def get_table_properties_from_template(resource_name):

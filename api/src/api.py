@@ -7,7 +7,7 @@ from flask_api.status import HTTP_404_NOT_FOUND
 from flask_cors import CORS
 from serverless_wsgi import handle_request
 
-import database
+from database import database
 
 
 class DecimalEncoder(JSONEncoder):

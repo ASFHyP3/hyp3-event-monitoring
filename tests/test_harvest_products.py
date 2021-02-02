@@ -5,8 +5,8 @@ from uuid import uuid4
 import responses
 from hyp3_sdk.util import AUTH_URL
 
-import database
 import harvest_products
+from database import database
 
 
 def test_get_incomplete_products(tables):

@@ -6,8 +6,8 @@ import responses
 from dateutil import parser
 from hyp3_sdk.util import AUTH_URL
 
-import database
 import find_new
+from database import database
 
 
 def test_get_events(tables):

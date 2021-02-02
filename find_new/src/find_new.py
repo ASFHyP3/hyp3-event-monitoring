@@ -5,7 +5,7 @@ import requests
 from dateutil import parser
 from hyp3_sdk import HyP3
 
-import database
+from database import database
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 

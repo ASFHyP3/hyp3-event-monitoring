@@ -3,7 +3,7 @@ from os import environ
 import boto3
 from hyp3_sdk import HyP3
 
-import database
+from database import database
 
 S3 = boto3.resource('s3')
 
