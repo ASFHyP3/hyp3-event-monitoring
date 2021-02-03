@@ -8,14 +8,14 @@ from models import models
 S3 = boto3.resource('s3')
 
 
-def harvest(product, job):
+def harvest(product: models.Product, job):
     destination_bucket = S3.Bucket(environ['BUCKET_NAME'])
     copy_source = {
         'Bucket': job.files[0]['s3']['bucket'],
         'Key': job.files[0]['s3']['key'],
     }
     product_name = job.files[0]['filename']
-    destination_key = f'{product["event_id"]}/{product["product_id"]}/{product_name}'
+    destination_key = f'{product.event_id}/{product.product_id}/{product_name}'
     print(f'copying {product_name} to s3://{destination_bucket}/{destination_key}')
     destination_bucket.copy(copy_source, destination_key)
 
@@ -28,16 +28,16 @@ def harvest(product, job):
     }
 
 
-def update_product(product):
-    print(f'Checking on product: {product}')
+def update_product(product: models.Product):
+    print(f'Checking on product: {product.product_id}')
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
-    job = hyp3._get_job_by_id(product['product_id'])
+    job = hyp3._get_job_by_id(product.product_id)
     if job.complete():
         print(f'product status is {job.status_code}')
         if job.succeeded():
-            product['files'] = harvest(product, job)
-        product['status_code'] = job.status_code
-        print(f'updating product table for: {product}')
+            product.files = harvest(product, job)
+        product.status_code = job.status_code
+        print(f'updating product table for: {product.product_id}')
         models.put_product(product)
 
 

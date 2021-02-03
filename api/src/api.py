@@ -27,7 +27,7 @@ app.json_encoder = DecimalEncoder
 @app.route('/events')
 def get_events():
     events = models.get_events()
-    return jsonify(events)
+    return jsonify([event.to_dict() for event in events])
 
 
 @app.route('/events/<event_id>')
@@ -36,15 +36,17 @@ def get_event_by_id(event_id):
         event = models.get_event(event_id)
     except ValueError:
         abort(HTTP_404_NOT_FOUND)
-    event['products'] = models.get_products_for_event(event_id, status_code='SUCCEEDED')
-    return jsonify(event)
+    products = models.get_products_for_event(event_id, status_code='SUCCEEDED')
+    event_dict = event.to_dict()
+    event_dict['products'] = [product.to_dict() for product in products]
+    return jsonify(event_dict)
 
 
 @app.route('/recent_products')
 def get_recent_products():
     processed_since = datetime.now(tz=timezone.utc) - timedelta(days=7)
     recent_products = models.get_products_by_status('SUCCEEDED', processed_since=processed_since)
-    return jsonify(recent_products)
+    return jsonify([product.to_dict() for product in recent_products])
 
 
 def lambda_handler(event, context):

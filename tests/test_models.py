@@ -85,10 +85,10 @@ def test_get_products_by_status(tables):
 def test_put_product(tables):
     assert tables.product_table.scan()['Items'] == []
 
-    product1 = {'event_id': 'event1', 'product_id': 'foo'}
+    product1 = models.Product(event_id='event1', product_id='foo')
     models.put_product(product1)
     assert tables.product_table.scan()['Items'] == [product1]
 
-    product2 = {'event_id': 'event2', 'product_id': 'bar'}
+    product2 = models.Product(event_id='event2', product_id='bar')
     models.put_product(product2)
     assert tables.product_table.scan()['Items'] == [product1, product2]

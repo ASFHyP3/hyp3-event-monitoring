@@ -12,9 +12,9 @@ SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
 def get_granules(event):
     search_params = {
-        'intersectsWith': event.get('wkt'),
-        'start': event['processing_timeframe']['start'],
-        'end': event['processing_timeframe'].get('end'),
+        'intersectsWith': event.wkt,
+        'start': event.processing_start,
+        'end': event.processing_end,
         'beamMode': 'IW',
         'platform': 'SENTINEL-1',
         'processingLevel': 'SLC',
@@ -27,8 +27,8 @@ def get_granules(event):
 
 def get_unprocessed_granules(event):
     all_granules = get_granules(event)
-    existing_products = models.get_products_for_event(event['event_id'])
-    processed_granule_names = [product['granules'][0]['granule_name'] for product in existing_products]
+    existing_products = models.get_products_for_event(event.event_id)
+    processed_granule_names = [product.granules[0]['granule_name'] for product in existing_products]
     return [granule for granule in all_granules if granule['granuleName'] not in processed_granule_names]
 
 
@@ -62,14 +62,14 @@ def format_granule(granule):
 
 
 def format_product(job, event, granules):
-    return {
-        'product_id': job.job_id,
-        'event_id': event['event_id'],
-        'granules': [format_granule(granule) for granule in granules],
-        'job_type': job.job_type,
-        'processing_date': job.request_time.isoformat(timespec='seconds'),
-        'status_code': job.status_code,
-    }
+    return models.Product(
+        product_id=job.job_id,
+        event_id=event.event_id,
+        granules=[format_granule(granule) for granule in granules],
+        job_type=job.job_type,
+        processing_date=job.request_time.isoformat(timespec='seconds'),
+        status_code=job.status_code,
+    )
 
 
 def add_product_for_processing(granule, event, process):
@@ -87,7 +87,7 @@ def add_product_for_processing(granule, event, process):
 
 
 def handle_event(event, processes):
-    print(f'processing event: {event["event_id"]}')
+    print(f'processing event: {event.event_id}')
     granules = get_unprocessed_granules(event)
     for granule in granules:
         for process in processes:

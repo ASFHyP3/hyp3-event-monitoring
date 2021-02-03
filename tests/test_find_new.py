@@ -7,7 +7,7 @@ from dateutil import parser
 from hyp3_sdk.util import AUTH_URL
 
 import find_new
-
+from models import models
 
 @responses.activate
 def test_get_granules():
@@ -31,14 +31,12 @@ def test_get_granules():
     }
     responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_response))
 
-    event = {
-        'event_id': 'foo',
-        'processing_timeframe': {
-            'start': '2020-01-01T00:00:00+00:00',
-            'end': '2020-01-02T00:00:00+00:00',
-        },
-        'wkt': 'someWKT',
-    }
+    event = models.Event(
+        event_id='foo',
+        processing_start='2020-01-01T00:00:00+00:00',
+        processing_end='2020-01-02T00:00:00+00:00',
+        wkt='someWKT',
+    )
     response = find_new.get_granules(event)
 
     assert response == mock_response['results']
@@ -80,14 +78,12 @@ def test_get_unproccesed_granules(tables):
     }
     responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_response))
 
-    event = {
-        'event_id': 'event_id1',
-        'processing_timeframe': {
-            'start': '2020-01-01T00:00:00+00:00',
-            'end': '2020-01-02T00:00:00+00:00',
-        },
-        'wkt': 'someWKT',
-    }
+    event = models.Event(
+        event_id='event_id1',
+        processing_start='2020-01-01T00:00:00+00:00',
+        processing_end='2020-01-02T00:00:00+00:00',
+        wkt='someWKT',
+    )
 
     mock_products = [
         {
@@ -153,14 +149,12 @@ def test_format_product():
         request_time = parser.parse('2020-01-01T00:00:00+00:00')
 
     job = MockJob()
-    event = {
-        'event_id': 'event_id1',
-        'processing_timeframe': {
-            'start': '2020-01-01T00:00:00+00:00',
-            'end': '2020-01-02T00:00:00+00:00',
-        },
-        'wkt': 'someWKT',
-    }
+    event = models.Event(
+        event_id='event_id1',
+        processing_start='2020-01-01T00:00:00+00:00',
+        processing_end='2020-01-02T00:00:00+00:00',
+        wkt='someWKT',
+    )
     granules = [
         {
             'granuleName': 'granule1',
@@ -170,7 +164,7 @@ def test_format_product():
             'wkt': 'someWKT',
         }
     ]
-    assert find_new.format_product(job, event, granules) == {
+    assert find_new.format_product(job, event, granules).to_dict() == {
         'product_id': 'foo',
         'event_id': 'event_id1',
         'granules': [
@@ -191,20 +185,18 @@ def test_format_product():
 @responses.activate
 def test_add_product_for_processing(tables):
     responses.add(responses.GET, AUTH_URL)
-    event = {
-        'event_id': 'event_id1',
-        'processing_timeframe': {
-            'start': '2020-01-01T00:00:00+00:00',
-            'end': '2020-01-02T00:00:00+00:00',
-        },
-        'wkt': 'someWKT',
-    }
+    event = models.Event(
+        event_id='event_id1',
+        processing_start='2020-01-01T00:00:00+00:00',
+        processing_end='2020-01-02T00:00:00+00:00',
+        wkt='someWKT',
+    )
     hyp3_response = {
         'jobs': [
             {
                 'job_id': 'foo',
                 'job_type': 'RTC_GAMMA',
-                'name': event['event_id'],
+                'name': event.event_id,
                 'request_time': '2020-06-04T18:00:03+00:00',
                 'user_id': 'some_user',
                 'status_code': 'PENDING',
