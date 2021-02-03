@@ -1,6 +1,7 @@
 import io
 from mimetypes import guess_type
 from os import environ
+from os.path import basename
 from urllib.parse import urlparse
 
 import boto3
@@ -13,7 +14,7 @@ S3 = boto3.resource('s3')
 
 
 def harvest_image(image_url, destination_bucket, destination_prefix):
-    filename = urlparse(image_url).path[1:]
+    filename = basename(urlparse(image_url).path)
     destination_key = f'{destination_prefix}/{filename}'
     response = requests.get(image_url)
     response.raise_for_status()
