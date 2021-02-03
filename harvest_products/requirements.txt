@@ -1,2 +1,3 @@
 hyp3-sdk
+requests
 ./database

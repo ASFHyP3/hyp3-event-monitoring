@@ -1,11 +1,26 @@
+import io
+from mimetypes import guess_type
 from os import environ
+from os.path import basename
+from urllib.parse import urlparse
 
 import boto3
+import requests
 from hyp3_sdk import HyP3
 
 from database import database
 
 S3 = boto3.resource('s3')
+
+
+def harvest_image(image_url, destination_bucket, destination_prefix):
+    filename = basename(urlparse(image_url).path)
+    destination_key = f'{destination_prefix}/{filename}'
+    response = requests.get(image_url)
+    response.raise_for_status()
+    content_type = guess_type(filename)[0] if guess_type(filename)[0] else 'application/octet-stream'
+    destination_bucket.put_object(Body=io.BytesIO(response.content), Key=destination_key, ContentType=content_type)
+    return f'https://{destination_bucket.name}.s3.amazonaws.com/{destination_key}'
 
 
 def harvest(product, job):
@@ -15,13 +30,14 @@ def harvest(product, job):
         'Key': job.files[0]['s3']['key'],
     }
     product_name = job.files[0]['filename']
-    destination_key = f'{product["event_id"]}/{product["product_id"]}/{product_name}'
+    destination_prefix = f'{product["event_id"]}/{product["product_id"]}'
+    destination_key = f'{destination_prefix}/{product_name}'
     print(f'copying {product_name} to s3://{destination_bucket}/{destination_key}')
     destination_bucket.copy(copy_source, destination_key)
 
     return {
-        'browse_url': job.browse_images[0],
-        'thumbnail_url': job.thumbnail_images[0],
+        'browse_url': harvest_image(job.browse_images[0], destination_bucket, destination_prefix),
+        'thumbnail_url': harvest_image(job.thumbnail_images[0], destination_bucket, destination_prefix),
         'product_name': product_name,
         'product_size': job.files[0]['size'],
         'product_url': f'https://{destination_bucket.name}.s3.amazonaws.com/{destination_key}',
