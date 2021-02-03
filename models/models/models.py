@@ -19,8 +19,10 @@ class Event:
         self.extras = kwargs
 
     def __eq__(self, other):
-        variables_to_compare = [attr for attr in dir(Event) if not callable(getattr(Event, attr)) and not attr.startswith("__")]
-        return all(getattr(self, a, NotImplementedError) == getattr(other, a, NotImplementedError) for a in variables_to_compare)
+        variables_to_compare = [attr for attr in dir(Event) if
+                                not callable(getattr(Event, attr)) and not attr.startswith("__")]
+        return all(getattr(self, a, NotImplementedError) == getattr(other, a, NotImplementedError) for a in
+                   variables_to_compare)
 
     def to_dict(self):
         d = {
@@ -59,9 +61,10 @@ class Product:
         self.extras = kwargs
 
     def __eq__(self, other):
-        variables_to_compare = [attr for attr in dir(Product) if not callable(getattr(Product, attr)) and not attr.startswith("__")]
-        return all(getattr(self, a, NotImplementedError) == getattr(other, a, NotImplementedError) for a in variables_to_compare)
-
+        variables_to_compare = [attr for attr in dir(Product) if
+                                not callable(getattr(Product, attr)) and not attr.startswith("__")]
+        return all(getattr(self, a, NotImplementedError) == getattr(other, a, NotImplementedError) for a in
+                   variables_to_compare)
 
     def to_dict(self):
         d = {

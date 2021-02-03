@@ -9,6 +9,7 @@ from hyp3_sdk.util import AUTH_URL
 import find_new
 from models import models
 
+
 @responses.activate
 def test_get_granules():
     mock_response = {
