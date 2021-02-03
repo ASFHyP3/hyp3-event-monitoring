@@ -18,9 +18,7 @@ def test_harvest_image(s3_stubber):
         'ContentType': 'image/png',
         'Body': ANY
     }
-    s3_response = {
-    }
-    s3_stubber.add_response(method='put_object', expected_params=params, service_response=s3_response)
+    s3_stubber.add_response(method='put_object', expected_params=params, service_response={})
     bucket = harvest_products.S3.Bucket(environ['BUCKET_NAME'])
     response = harvest_products.harvest_image('https://foo.com/file.png', bucket, 'prefix')
 
@@ -74,13 +72,12 @@ def test_harvest(s3_stubber):
     }
     s3_stubber.add_response(method='copy_object', expected_params=params, service_response={})
 
-    mock_harvest_image = 'https://foo.com/file.png'
-    with mock.patch('harvest_products.harvest_image', lambda x, y, z: mock_harvest_image):
+    with mock.patch('harvest_products.harvest_image', lambda x, y, z: 'https://foo.com/file.png'):
         files = harvest_products.harvest(product, MockJob())
 
     assert files == {
-        'browse_url': mock_harvest_image,
-        'thumbnail_url': mock_harvest_image,
+        'browse_url': 'https://foo.com/file.png',
+        'thumbnail_url': 'https://foo.com/file.png',
         'product_name': 'product.zip',
         'product_size': 123,
         'product_url': f'https://{environ["BUCKET_NAME"]}.s3.amazonaws.com/1/source_prefix/product.zip'
@@ -118,12 +115,12 @@ def test_update_product(tables):
     responses.add(responses.GET, environ['HYP3_URL'] + '/jobs/foo', json.dumps(hyp3_response))
 
     mock_harvest = {
-            'browse_url': 'BROWSE_IMAGE_URL',
-            'thumbnail_url': 'THUMBNAIL_IMAGE_URL',
-            'product_name': 'product.zip',
-            'product_size': 123,
-            'product_url': f'https://{environ["BUCKET_NAME"]}.s3.amazonaws.com/1/foo/product.zip'
-        }
+        'browse_url': 'BROWSE_IMAGE_URL',
+        'thumbnail_url': 'THUMBNAIL_IMAGE_URL',
+        'product_name': 'product.zip',
+        'product_size': 123,
+        'product_url': f'https://{environ["BUCKET_NAME"]}.s3.amazonaws.com/1/foo/product.zip'
+    }
 
     with mock.patch('harvest_products.harvest', lambda x, y: mock_harvest):
         harvest_products.update_product(product)
