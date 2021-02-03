@@ -4,8 +4,8 @@ from os import environ
 from urllib.parse import urlparse
 
 import boto3
-from hyp3_sdk import HyP3
 import requests
+from hyp3_sdk import HyP3
 
 from database import database
 
@@ -16,6 +16,7 @@ def harvest_image(image_url, destination_bucket, destination_prefix):
     filename = urlparse(image_url).path[1:]
     destination_key = f'{destination_prefix}/{filename}'
     response = requests.get(image_url)
+    response.raise_for_status()
     content_type = guess_type(filename)[0] if guess_type(filename)[0] else 'application/octet-stream'
     destination_bucket.put_object(Body=io.BytesIO(response.content), Key=destination_key, ContentType=content_type)
     return f'https://{destination_bucket.name}.s3.amazonaws.com/{destination_key}'
