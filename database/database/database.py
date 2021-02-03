@@ -58,7 +58,7 @@ def get_products_for_event(event_id: str, status_code: str = None) -> List[dict]
     key_expression = Key('event_id').eq(event_id)
     if status_code:
         filter_expression = Attr('status_code').eq(status_code)
-        return query_table(PRODUCT_TABLE, key_expression, filter_expression)
+        return query_table(PRODUCT_TABLE, key_expression, filter_expression=filter_expression)
     else:
         return query_table(PRODUCT_TABLE, key_expression)
 
