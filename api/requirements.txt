@@ -2,4 +2,4 @@ flask
 flask_api
 Flask-Cors
 serverless_wsgi
-./database
+./models

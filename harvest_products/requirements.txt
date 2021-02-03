@@ -1,2 +1,2 @@
 hyp3-sdk
-./database
+./models
