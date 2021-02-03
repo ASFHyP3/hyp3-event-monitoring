@@ -1,10 +1,10 @@
 import io
 from mimetypes import guess_type
 from os import environ
+from urllib.parse import urlparse
 
 import boto3
 from hyp3_sdk import HyP3
-from urllib.parse import urlparse
 import requests
 
 from database import database

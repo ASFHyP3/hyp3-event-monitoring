@@ -2,7 +2,6 @@ import json
 from os import environ
 from unittest import mock
 
-import boto3
 import responses
 from botocore.stub import ANY
 from hyp3_sdk.util import AUTH_URL
@@ -75,7 +74,7 @@ def test_harvest(s3_stubber):
     }
     s3_stubber.add_response(method='copy_object', expected_params=params, service_response={})
 
-    mock_harvest_image= 'https://foo.com/file.png'
+    mock_harvest_image = 'https://foo.com/file.png'
     with mock.patch('harvest_products.harvest_image', lambda x, y, z: mock_harvest_image):
         files = harvest_products.harvest(product, MockJob())
 
