@@ -97,7 +97,7 @@ def test_get_unproccesed_granules(tables):
             'granules': [
                 {
                     'granule_name': 'granule1',
-                    'aquisition_date': '2020-01-01T00:00:00+00:00',
+                    'acquisition_date': '2020-01-01T00:00:00+00:00',
                     'path': 123,
                     'frame': 456,
                     'wkt': 'someWKT',
@@ -111,7 +111,7 @@ def test_get_unproccesed_granules(tables):
             'granules': [
                 {
                     'granule_name': 'granule2',
-                    'aquisition_date': '2020-01-01T00:00:00+00:00',
+                    'acquisition_date': '2020-01-01T00:00:00+00:00',
                     'path': 456,
                     'frame': 789,
                     'wkt': 'someWKT',
@@ -277,7 +277,7 @@ def test_lambda_handler(tables):
             'granules': [
                 {
                     'granule_name': 'granule1',
-                    'aquisition_date': '2020-01-01T00:00:00+00:00',
+                    'acquisition_date': '2020-01-01T00:00:00+00:00',
                     'path': 123,
                     'frame': 456,
                     'wkt': 'someWKT',
@@ -291,7 +291,7 @@ def test_lambda_handler(tables):
             'granules': [
                 {
                     'granule_name': 'granule2',
-                    'aquisition_date': '2020-01-01T00:00:00+00:00',
+                    'acquisition_date': '2020-01-01T00:00:00+00:00',
                     'path': 456,
                     'frame': 789,
                     'wkt': 'someWKT',
