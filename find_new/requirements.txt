@@ -1,4 +1,4 @@
-hyp3-sdk
+hyp3-sdk>=0.4.0
 python-dateutil
 requests
 ./database

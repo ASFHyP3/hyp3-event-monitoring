@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import responses
 from dateutil import parser
+from hyp3_sdk.asf_search import _BASLINE_API
 from hyp3_sdk.util import AUTH_URL
 
 import find_new
@@ -205,7 +206,7 @@ def test_add_product_for_processing(tables):
             # TODO add neighbors
         ]
     }
-    responses.add(responses.GET, find_new.BASELINE_URL, json.dumps(mock_response))
+    responses.add(responses.GET, _BASLINE_API, json.dumps(mock_response))
 
     hyp3_response = {
         'jobs': [
@@ -284,7 +285,7 @@ def test_lambda_handler(tables):
             # TODO add neighbors
         ]
     }
-    responses.add(responses.GET, find_new.BASELINE_URL, json.dumps(mock_response))
+    responses.add(responses.GET, _BASLINE_API, json.dumps(mock_response))
 
     mock_products = [
         {
