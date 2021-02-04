@@ -1,3 +1,3 @@
 # HyP3 Subscriptions
 
-Backend software stack to support Sarviews Hazards
+A software stack to allow users to enable event monitoring and processing of data as it becomes available.
