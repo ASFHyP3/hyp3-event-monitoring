@@ -1,4 +1,3 @@
-# HyP3 Subscriptions
+# HyP3 Event Monitoring
 
-A software stack to allow users to submit subscriptions to run jobs based on
-search criteria, which may include future data.
+A software stack to allow users to enable event monitoring and processing of data as it becomes available.
