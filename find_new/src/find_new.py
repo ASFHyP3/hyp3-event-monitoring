@@ -110,7 +110,7 @@ def add_product_for_processing(granule, event, process):
     if process['job_type'] == 'RTC_GAMMA':
         job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
         products.append(format_product(job, event, [granule]))
-    if process['job_type'] == 'INSAR_GAMMA':
+    elif process['job_type'] == 'INSAR_GAMMA':
         neighbors = get_nearest_neighbors(granule['granuleName'])
         for neighbor in neighbors:
             job = hyp3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])

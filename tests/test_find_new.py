@@ -199,6 +199,14 @@ def test_add_product_for_processing(tables):
         },
         'wkt': 'someWKT',
     }
+
+    mock_response = {
+        'results': [
+            # TODO add neighbors
+        ]
+    }
+    responses.add(responses.GET, find_new.BASELINE_URL, json.dumps(mock_response))
+
     hyp3_response = {
         'jobs': [
             {
@@ -212,6 +220,8 @@ def test_add_product_for_processing(tables):
         ],
     }
     responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_response))
+    # TODO mock submission of insar jobs
+
     granule = {
         'granuleName': 'granule1',
         'startTime': '2020-01-01T00:00:00+00:00',
@@ -269,6 +279,13 @@ def test_lambda_handler(tables):
     }
     responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_response))
 
+    mock_response = {
+        'results': [
+            # TODO add neighbors
+        ]
+    }
+    responses.add(responses.GET, find_new.BASELINE_URL, json.dumps(mock_response))
+
     mock_products = [
         {
             'product_id': str(uuid4()),
@@ -316,6 +333,7 @@ def test_lambda_handler(tables):
         ],
     }
     responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_response))
+    # TODO mock submission of insar jobs
 
     find_new.lambda_handler(None, None)
 
