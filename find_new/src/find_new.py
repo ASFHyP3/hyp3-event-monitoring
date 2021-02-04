@@ -1,5 +1,6 @@
 from datetime import timezone
 from os import environ
+from typing import List
 
 import requests
 from dateutil import parser
@@ -8,6 +9,28 @@ from hyp3_sdk import HyP3
 from database import database
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
+BASELINE_URL = 'https://api.daac.asf.alaska.edu/services/search/baseline'
+
+
+def get_nearest_neighbors(granule: str, max_neighbors: int = 2,) -> List[dict]:
+    """Get a granules nearest neighbors from a temporal stack (backwards in time)
+    Args:
+        granule: reference granule
+        max_neighbors: maximum number of neighbors to return
+    Returns:
+        neighbors: a list of neighbors sorted by time
+    """
+    params = {
+        'output': 'jsonlite',
+        'master': granule,
+    }
+    response = requests.get(BASELINE_URL, params=params)
+    response.raise_for_status()
+    all_neighbors = response.json()['results']
+    selected_neighbors = [n for n in all_neighbors if n['temporalBaseline'] < 0]
+    selected_neighbors.sort(key=lambda k: k['temporalBaseline'], reverse=True)
+
+    return selected_neighbors[:max_neighbors]
 
 
 def get_granules(event):
@@ -47,6 +70,14 @@ def get_processes():
                 'speckle_filter': False,
             },
         },
+        {
+            'job_type': 'INSAR_GAMMA',
+            'parameters': {
+                'include_look_vectors': True,
+                'include_los_displacement': False,
+                'looks': '20x4',
+            },
+        },
     ]
 
 
@@ -79,6 +110,11 @@ def add_product_for_processing(granule, event, process):
     if process['job_type'] == 'RTC_GAMMA':
         job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
         products.append(format_product(job, event, [granule]))
+    if process['job_type'] == 'INSAR_GAMMA':
+        neighbors = get_nearest_neighbors(granule['granuleName'])
+        for neighbor in neighbors:
+            job = hyp3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])
+            products.append(format_product(job, event, [granule, neighbor]))
     else:
         raise NotImplementedError('Unknown or unimplemented process job type')
     for product in products:
