@@ -63,7 +63,7 @@ Resources:
           EDL_PASSWORD: !Ref EDLPassword
       Code: src/
       Handler: harvest_products.lambda_handler
-      MemorySize: 128
+      MemorySize: 256
       Role: !GetAtt Role.Arn
       Runtime: python3.8
       Timeout: 900
