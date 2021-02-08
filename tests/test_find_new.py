@@ -375,4 +375,14 @@ def test_lambda_handler(tables):
     products = tables.product_table.scan()['Items']
 
     assert len(products) == 5
-    assert [product['granules'][0]['granule_name'] for product in products] == ['granule1', 'granule2', 'granule3', 'granule3', 'granule3']
+
+    assert products[2]['job_type'] == 'RTC_GAMMA'
+    assert products[2]['granules'][0]['granule_name'] == 'granule3'
+
+    assert products[3]['job_type'] == 'INSAR_GAMMA'
+    assert products[3]['granules'][0]['granule_name'] == 'granule3'
+    assert products[3]['granules'][1]['granule_name'] == 'neighbor1'
+
+    assert products[4]['job_type'] == 'INSAR_GAMMA'
+    assert products[4]['granules'][0]['granule_name'] == 'granule3'
+    assert products[4]['granules'][1]['granule_name'] == 'neighbor2'
