@@ -192,28 +192,18 @@ def test_format_product():
 @responses.activate
 def test_add_rtc_product_for_processing(tables):
     responses.add(responses.GET, AUTH_URL)
-    event = {
-        'event_id': 'event_id1',
-        'processing_timeframe': {
-            'start': '2020-01-01T00:00:00+00:00',
-            'end': '2020-01-02T00:00:00+00:00',
-        },
-        'wkt': 'someWKT',
-    }
-
-    hyp3_response = {
+    mock_hyp3_response = {
         'jobs': [
             {
                 'job_id': 'foo',
                 'job_type': 'RTC_GAMMA',
-                'name': event['event_id'],
                 'request_time': '2020-06-04T18:00:03+00:00',
                 'user_id': 'some_user',
                 'status_code': 'PENDING',
             }
         ],
     }
-    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_response))
+    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
 
     granule = {
         'granuleName': 'granule1',
@@ -222,12 +212,23 @@ def test_add_rtc_product_for_processing(tables):
         'frame': 456,
         'wkt': 'someWKT',
     }
+    event = {
+        'event_id': 'event_id1',
+        'processing_timeframe': {
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
+        },
+        'wkt': 'someWKT',
+    }
     find_new.add_product_for_processing(granule, event, find_new.get_processes()[0])
 
     products = tables.product_table.scan()['Items']
+
     assert len(products) == 1
+    assert products[0]['job_type'] == 'RTC_GAMMA'
     assert products[0]['processing_date'] == '2020-06-04T18:00:03+00:00'
     assert products[0]['status_code'] == 'PENDING'
+    assert products[0]['granules'][0]['granule_name'] == 'granule1'
 
 
 @responses.activate
