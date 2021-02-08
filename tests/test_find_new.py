@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import responses
 from dateutil import parser
+from hyp3_sdk import HyP3
 from hyp3_sdk.util import AUTH_URL
 from mock import patch
 
@@ -154,14 +155,7 @@ def test_format_product():
         request_time = parser.parse('2020-01-01T00:00:00+00:00')
 
     job = MockJob()
-    event = {
-        'event_id': 'event_id1',
-        'processing_timeframe': {
-            'start': '2020-01-01T00:00:00+00:00',
-            'end': '2020-01-02T00:00:00+00:00',
-        },
-        'wkt': 'someWKT',
-    }
+    event_id = 'event_id1'
     granules = [
         {
             'granuleName': 'granule1',
@@ -171,7 +165,7 @@ def test_format_product():
             'wkt': 'someWKT',
         }
     ]
-    assert find_new.format_product(job, event, granules) == {
+    assert find_new.format_product(job, event_id, granules) == {
         'product_id': 'foo',
         'event_id': 'event_id1',
         'granules': [
@@ -190,56 +184,14 @@ def test_format_product():
 
 
 @responses.activate
-def test_add_rtc_product_for_processing(tables):
-    responses.add(responses.GET, AUTH_URL)
-    mock_hyp3_response = {
-        'jobs': [
-            {
-                'job_id': 'foo',
-                'job_type': 'RTC_GAMMA',
-                'request_time': '2020-06-04T18:00:03+00:00',
-                'user_id': 'some_user',
-                'status_code': 'PENDING',
-            }
-        ],
-    }
-    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
-
-    granule = {
-        'granuleName': 'granule1',
-        'startTime': '2020-01-01T00:00:00+00:00',
-        'path': 123,
-        'frame': 456,
-        'wkt': 'someWKT',
-    }
-    event = {
-        'event_id': 'event_id1',
-        'processing_timeframe': {
-            'start': '2020-01-01T00:00:00+00:00',
-            'end': '2020-01-02T00:00:00+00:00',
-        },
-        'wkt': 'someWKT',
-    }
-    find_new.add_product_for_processing(granule, event, find_new.get_processes()[0])
-
-    products = tables.product_table.scan()['Items']
-
-    assert len(products) == 1
-    assert products[0]['job_type'] == 'RTC_GAMMA'
-    assert products[0]['processing_date'] == '2020-06-04T18:00:03+00:00'
-    assert products[0]['status_code'] == 'PENDING'
-    assert products[0]['granules'][0]['granule_name'] == 'granule1'
-
-
-@responses.activate
-def test_add_insar_product_for_processing(tables):
+def test_submit_jobs_for_granule(tables):
     responses.add(responses.GET, AUTH_URL)
     mock_hyp3_responses = [
         {
             'jobs': [
                 {
                     'job_id': '1',
-                    'job_type': 'INSAR_GAMMA',
+                    'job_type': 'RTC_GAMMA',
                     'request_time': '2020-06-04T18:00:03+00:00',
                     'user_id': 'some_user',
                     'status_code': 'PENDING',
@@ -250,6 +202,17 @@ def test_add_insar_product_for_processing(tables):
             'jobs': [
                 {
                     'job_id': '2',
+                    'job_type': 'INSAR_GAMMA',
+                    'request_time': '2020-06-04T18:00:03+00:00',
+                    'user_id': 'some_user',
+                    'status_code': 'PENDING',
+                }
+            ],
+        },
+        {
+            'jobs': [
+                {
+                    'job_id': '3',
                     'job_type': 'INSAR_GAMMA',
                     'request_time': '2020-06-04T18:00:03+00:00',
                     'user_id': 'some_user',
@@ -285,27 +248,26 @@ def test_add_insar_product_for_processing(tables):
         'frame': 456,
         'wkt': 'someWKT',
     }
-    event = {
-        'event_id': 'event_id1',
-        'processing_timeframe': {
-            'start': '2020-01-01T00:00:00+00:00',
-            'end': '2020-01-02T00:00:00+00:00',
-        },
-        'wkt': 'someWKT',
-    }
+    event_id = 'event_id1'
+
+    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: mock_neighbors):
-        find_new.add_product_for_processing(granule, event, find_new.get_processes()[1])
+        find_new.submit_jobs_for_granule(hyp3, granule, event_id)
 
     products = tables.product_table.scan()['Items']
 
-    assert len(products) == 2
-    assert all([p['job_type'] == 'INSAR_GAMMA' for p in products])
+    assert len(products) == 3
     assert all([p['processing_date'] == '2020-06-04T18:00:03+00:00' for p in products])
     assert all([p['status_code'] == 'PENDING' for p in products])
     assert all([p['granules'][0]['granule_name'] == 'reference' for p in products])
 
-    assert products[0]['granules'][1]['granule_name'] == 'neighbor1'
-    assert products[1]['granules'][1]['granule_name'] == 'neighbor2'
+    assert products[0]['job_type'] == 'RTC_GAMMA'
+
+    assert products[1]['job_type'] == 'INSAR_GAMMA'
+    assert products[1]['granules'][1]['granule_name'] == 'neighbor1'
+
+    assert products[2]['job_type'] == 'INSAR_GAMMA'
+    assert products[2]['granules'][1]['granule_name'] == 'neighbor2'
 
 
 @responses.activate

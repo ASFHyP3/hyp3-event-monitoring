@@ -32,32 +32,6 @@ def get_unprocessed_granules(event):
     return [granule for granule in all_granules if granule['granuleName'] not in processed_granule_names]
 
 
-def get_processes():
-    return [
-        {
-            'job_type': 'RTC_GAMMA',
-            'parameters': {
-                'dem_matching': False,
-                'include_dem': False,
-                'include_inc_map': False,
-                'include_scattering_area': False,
-                'radiometry': 'gamma0',
-                'resolution': 30,
-                'scale': 'power',
-                'speckle_filter': False,
-            },
-        },
-        {
-            'job_type': 'INSAR_GAMMA',
-            'parameters': {
-                'include_look_vectors': True,
-                'include_los_displacement': False,
-                'looks': '20x4',
-            },
-        },
-    ]
-
-
 def format_granule(granule):
     acquisition_date = parser.parse(granule['startTime']).replace(tzinfo=timezone.utc).isoformat(timespec='seconds')
     return {
@@ -69,10 +43,10 @@ def format_granule(granule):
     }
 
 
-def format_product(job, event, granules):
+def format_product(job, event_id, granules):
     return {
         'product_id': job.job_id,
-        'event_id': event['event_id'],
+        'event_id': event_id,
         'granules': [format_granule(granule) for granule in granules],
         'job_type': job.job_type,
         'processing_date': job.request_time.isoformat(timespec='seconds'),
@@ -80,35 +54,29 @@ def format_product(job, event, granules):
     }
 
 
-def add_product_for_processing(granule, event, process):
-    print(f'submitting {process["job_type"]} for {granule}')
-    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
-    products = []
-    if process['job_type'] == 'RTC_GAMMA':
-        job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
-        products.append(format_product(job, event, [granule]))
-    elif process['job_type'] == 'INSAR_GAMMA':
-        neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
-        for neighbor in neighbors:
-            job = hyp3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])
-            products.append(format_product(job, event, [granule, neighbor]))
-    else:
-        raise NotImplementedError('Unknown or unimplemented process job type')
-    for product in products:
-        print(f'adding product for processing: {product}')
-        database.put_product(product)
+def submit_jobs_for_granule(hyp3, granule, event_id):
+    print(f'submitting jobs for granule {granule}')
+
+    rtc_job = hyp3.submit_rtc_job(granule=granule['granuleName'])
+    rtc_product = format_product(rtc_job, event_id, [granule])
+    database.put_product(rtc_product)
+
+    neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
+    for neighbor in neighbors:
+        insar_job = hyp3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)
+        insar_product = format_product(insar_job, event_id, [granule, neighbor])
+        database.put_product(insar_product)
 
 
-def handle_event(event, processes):
+def handle_event(hyp3, event):
     print(f'processing event: {event["event_id"]}')
     granules = get_unprocessed_granules(event)
     for granule in granules:
-        for process in processes:
-            add_product_for_processing(granule, event, process)
+        submit_jobs_for_granule(hyp3, granule, event['event_id'])
 
 
 def lambda_handler(event, context):
+    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     events = database.get_events()
-    processes = get_processes()
     for event in events:
-        handle_event(event, processes)
+        handle_event(hyp3, event)
