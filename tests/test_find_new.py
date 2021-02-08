@@ -253,50 +253,6 @@ def test_lambda_handler(tables):
     for mock_hyp3_response in mock_events:
         tables.event_table.put_item(Item=mock_hyp3_response)
 
-    mock_response = {
-        'results': [
-            {
-                'granuleName': 'granule1',
-                'startTime': '2020-01-01T00:00:00+00:00',
-                'path': 123,
-                'frame': 456,
-                'wkt': 'someWKT',
-            },
-            {
-                'granuleName': 'granule2',
-                'startTime': '2020-01-01T00:00:00+00:00',
-                'path': 456,
-                'frame': 789,
-                'wkt': 'someWKT',
-            },
-            {
-                'granuleName': 'granule3',
-                'startTime': '2020-01-01T00:00:00+00:00',
-                'path': 123,
-                'frame': 456,
-                'wkt': 'someWKT',
-            }
-        ]
-    }
-    responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_response))
-
-    mock_neighbors = [
-            {
-                'granuleName': 'neighbor1',
-                'startTime': '2020-01-01T00:00:00+00:00',
-                'path': 123,
-                'frame': 456,
-                'wkt': 'someWKT',
-            },
-            {
-                'granuleName': 'neighbor2',
-                'startTime': '2020-01-01T00:00:00+00:00',
-                'path': 456,
-                'frame': 789,
-                'wkt': 'someWKT',
-            },
-    ]
-
     mock_products = [
         {
             'product_id': str(uuid4()),
@@ -327,11 +283,55 @@ def test_lambda_handler(tables):
             ]
         },
     ]
-    for mock_hyp3_response in mock_products:
-        tables.product_table.put_item(Item=mock_hyp3_response)
+    for mock_product in mock_products:
+        tables.product_table.put_item(Item=mock_product)
+
+    mock_search_response = {
+        'results': [
+            {
+                'granuleName': 'granule1',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'granule2',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 456,
+                'frame': 789,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'granule3',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            }
+        ]
+    }
+    responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_search_response))
+
+    mock_neighbors = [
+            {
+                'granuleName': 'neighbor1',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'neighbor2',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 456,
+                'frame': 789,
+                'wkt': 'someWKT',
+            },
+    ]
 
     responses.add(responses.GET, AUTH_URL)
-    mock_hyp3_responses =[
+    mock_hyp3_responses = [
         {
             'jobs': [
                 {
