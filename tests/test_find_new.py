@@ -190,7 +190,7 @@ def test_format_product():
 
 
 @responses.activate
-def test_add_product_for_processing(tables):
+def test_add_rtc_product_for_processing(tables):
     responses.add(responses.GET, AUTH_URL)
     event = {
         'event_id': 'event_id1',
@@ -200,13 +200,6 @@ def test_add_product_for_processing(tables):
         },
         'wkt': 'someWKT',
     }
-
-    # mock_response = {
-    #     'results': [
-    #         # TODO add neighbors
-    #     ]
-    # }
-    # responses.add(responses.GET, _BASLINE_API, json.dumps(mock_response))
 
     hyp3_response = {
         'jobs': [
@@ -221,7 +214,6 @@ def test_add_product_for_processing(tables):
         ],
     }
     responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_response))
-    # TODO mock submission of insar jobs
 
     granule = {
         'granuleName': 'granule1',
@@ -236,6 +228,83 @@ def test_add_product_for_processing(tables):
     assert len(products) == 1
     assert products[0]['processing_date'] == '2020-06-04T18:00:03+00:00'
     assert products[0]['status_code'] == 'PENDING'
+
+
+@responses.activate
+def test_add_insar_product_for_processing(tables):
+    responses.add(responses.GET, AUTH_URL)
+    mock_hyp3_responses = [
+        {
+            'jobs': [
+                {
+                    'job_id': '1',
+                    'job_type': 'INSAR_GAMMA',
+                    'request_time': '2020-06-04T18:00:03+00:00',
+                    'user_id': 'some_user',
+                    'status_code': 'PENDING',
+                }
+            ],
+        },
+        {
+            'jobs': [
+                {
+                    'job_id': '2',
+                    'job_type': 'INSAR_GAMMA',
+                    'request_time': '2020-06-04T18:00:03+00:00',
+                    'user_id': 'some_user',
+                    'status_code': 'PENDING',
+                }
+            ],
+        },
+    ]
+    for mock_hyp3_response in mock_hyp3_responses:
+        responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
+
+    mock_neighbors = [
+            {
+                'granuleName': 'neighbor1',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'neighbor2',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 456,
+                'frame': 789,
+                'wkt': 'someWKT',
+            },
+    ]
+
+    granule = {
+        'granuleName': 'reference',
+        'startTime': '2020-01-01T00:00:00+00:00',
+        'path': 123,
+        'frame': 456,
+        'wkt': 'someWKT',
+    }
+    event = {
+        'event_id': 'event_id1',
+        'processing_timeframe': {
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
+        },
+        'wkt': 'someWKT',
+    }
+    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: mock_neighbors):
+        find_new.add_product_for_processing(granule, event, find_new.get_processes()[1])
+
+    products = tables.product_table.scan()['Items']
+
+    assert len(products) == 2
+    assert all([p['job_type'] == 'INSAR_GAMMA' for p in products])
+    assert all([p['processing_date'] == '2020-06-04T18:00:03+00:00' for p in products])
+    assert all([p['status_code'] == 'PENDING' for p in products])
+    assert all([p['granules'][0]['granule_name'] == 'reference' for p in products])
+
+    assert products[0]['granules'][1]['granule_name'] == 'neighbor1'
+    assert products[1]['granules'][1]['granule_name'] == 'neighbor2'
 
 
 @responses.activate
