@@ -84,6 +84,7 @@ def test_harvest(s3_stubber):
     }
 
 
+@responses.activate
 def test_update_product(tables):
     product = {
         'event_id': '1',

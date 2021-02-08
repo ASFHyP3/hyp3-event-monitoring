@@ -5,8 +5,8 @@ flake8-blind-except
 flake8-builtins
 flake8-import-order
 pytest
-moto
-responses==0.12.0
+moto>=1.3.17dev240
+responses>=0.12.1
 pyYAML
 -r find_new/requirements.txt
 -r api/requirements.txt

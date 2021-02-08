@@ -3,7 +3,7 @@ from os import environ
 
 import requests
 from dateutil import parser
-from hyp3_sdk import HyP3
+from hyp3_sdk import HyP3, asf_search
 
 from database import database
 
@@ -47,6 +47,14 @@ def get_processes():
                 'speckle_filter': False,
             },
         },
+        {
+            'job_type': 'INSAR_GAMMA',
+            'parameters': {
+                'include_look_vectors': True,
+                'include_los_displacement': False,
+                'looks': '20x4',
+            },
+        },
     ]
 
 
@@ -79,6 +87,11 @@ def add_product_for_processing(granule, event, process):
     if process['job_type'] == 'RTC_GAMMA':
         job = hyp3.submit_rtc_job(granule=granule['granuleName'], **process['parameters'])
         products.append(format_product(job, event, [granule]))
+    elif process['job_type'] == 'INSAR_GAMMA':
+        neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
+        for neighbor in neighbors:
+            job = hyp3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], **process['parameters'])
+            products.append(format_product(job, event, [granule, neighbor]))
     else:
         raise NotImplementedError('Unknown or unimplemented process job type')
     for product in products:
