@@ -32,7 +32,7 @@ def harvest(product, job):
     product_name = job.files[0]['filename']
     destination_prefix = f'{product["event_id"]}/{product["product_id"]}'
     destination_key = f'{destination_prefix}/{product_name}'
-    print(f'copying {product_name} to s3://{destination_bucket}/{destination_key}')
+    print(f'copying {product_name} to s3://{destination_bucket.name}/{destination_key}')
     destination_bucket.copy(copy_source, destination_key)
 
     return {
@@ -44,20 +44,20 @@ def harvest(product, job):
     }
 
 
-def update_product(product):
-    print(f'Checking on product: {product}')
-    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
-    job = hyp3._get_job_by_id(product['product_id'])
-    if job.complete():
-        print(f'product status is {job.status_code}')
-        if job.succeeded():
-            product['files'] = harvest(product, job)
-        product['status_code'] = job.status_code
-        print(f'updating product table for: {product}')
-        database.put_product(product)
+def update_product(product, job):
+    print(f'job status is {job.status_code}')
+    if job.succeeded():
+        product['files'] = harvest(product, job)
+    product['status_code'] = job.status_code
+    print(f'updating product table for: {product}')
+    database.put_product(product)
 
 
 def lambda_handler(event, context):
     products = database.get_products_by_status('PENDING')
+    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     for product in products:
-        update_product(product)
+        print(f'Checking on product: {product["product_id"]}')
+        job = hyp3._get_job_by_id(product['product_id'])
+        if job.complete():
+            update_product(product, job)

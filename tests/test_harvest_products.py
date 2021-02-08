@@ -1,10 +1,10 @@
-import json
 from os import environ
 from unittest import mock
 
 import responses
 from botocore.stub import ANY
-from hyp3_sdk.util import AUTH_URL
+from dateutil import parser
+from hyp3_sdk.jobs import Job
 
 import harvest_products
 
@@ -25,7 +25,6 @@ def test_harvest_image(s3_stubber):
     assert response == f'https://{environ["BUCKET_NAME"]}.s3.amazonaws.com/prefix/file.png'
 
 
-@responses.activate
 def test_harvest(s3_stubber):
     product = {
         'event_id': '1',
@@ -84,8 +83,7 @@ def test_harvest(s3_stubber):
     }
 
 
-@responses.activate
-def test_update_product(tables):
+def test_update_product_succeeded(tables):
     product = {
         'event_id': '1',
         'product_id': 'foo',
@@ -94,16 +92,15 @@ def test_update_product(tables):
         'processing_date': '2020-01-01T00:00:00+00:00'
     }
 
-    hyp3_response = {
-        'job_id': 'foo',
-        'job_type': 'RTC_GAMMA',
-        'name': 'event_id1',
-        'request_time': '2020-06-04T18:00:03+00:00',
-        'user_id': 'some_user',
-        'status_code': 'SUCCEEDED',
-        'browse_images': ['BROWSE_IMAGE_URL'],
-        'thumbnail_images': ['THUMBNAIL_IMAGE_URL'],
-        'files': [
+    job = Job(
+        job_type='RTC_GAMMA',
+        job_id='foo',
+        request_time=parser.parse('2020-01-01T00:00:00+00:00'),
+        status_code='SUCCEEDED',
+        user_id='some_user',
+        browse_images=['BROWSE_IMAGE_URL'],
+        thumbnail_images=['THUMBNAIL_IMAGE_URL'],
+        files=[
             {
                 's3': {
                     'bucket': 'BUCKET',
@@ -111,9 +108,7 @@ def test_update_product(tables):
                 },
             },
         ],
-    }
-    responses.add(responses.GET, AUTH_URL)
-    responses.add(responses.GET, environ['HYP3_URL'] + '/jobs/foo', json.dumps(hyp3_response))
+    )
 
     mock_harvest = {
         'browse_url': 'BROWSE_IMAGE_URL',
@@ -124,9 +119,34 @@ def test_update_product(tables):
     }
 
     with mock.patch('harvest_products.harvest', lambda x, y: mock_harvest):
-        harvest_products.update_product(product)
+        harvest_products.update_product(product, job)
 
     updated_product = tables.product_table.scan()['Items'][0]
 
     assert updated_product['status_code'] == 'SUCCEEDED'
     assert updated_product['files'] == mock_harvest
+
+
+def test_update_product_failed(tables):
+    product = {
+        'event_id': '1',
+        'product_id': 'foo',
+        'granules': [],
+        'status_code': 'PENDING',
+        'processing_date': '2020-01-01T00:00:00+00:00'
+    }
+
+    job = Job(
+        job_type='RTC_GAMMA',
+        job_id='foo',
+        request_time=parser.parse('2020-01-01T00:00:00+00:00'),
+        status_code='FAILED',
+        user_id='some_user',
+    )
+
+    harvest_products.update_product(product, job)
+
+    updated_product = tables.product_table.scan()['Items'][0]
+
+    assert updated_product['status_code'] == 'FAILED'
+    assert 'files' not in updated_product
