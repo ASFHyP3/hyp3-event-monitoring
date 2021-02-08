@@ -32,7 +32,7 @@ def harvest(product, job):
     product_name = job.files[0]['filename']
     destination_prefix = f'{product["event_id"]}/{product["product_id"]}'
     destination_key = f'{destination_prefix}/{product_name}'
-    print(f'copying {product_name} to s3://{destination_bucket}/{destination_key}')
+    print(f'copying {product_name} to s3://{destination_bucket.name}/{destination_key}')
     destination_bucket.copy(copy_source, destination_key)
 
     return {
