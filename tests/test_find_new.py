@@ -1,11 +1,11 @@
 import json
 from os import environ
 from uuid import uuid4
-from mock import patch
 
 import responses
 from dateutil import parser
 from hyp3_sdk.util import AUTH_URL
+from mock import patch
 
 import find_new
 
