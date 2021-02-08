@@ -1,10 +1,10 @@
 import json
 from os import environ
 from uuid import uuid4
+from mock import patch
 
 import responses
 from dateutil import parser
-from hyp3_sdk.asf_search import _BASLINE_API
 from hyp3_sdk.util import AUTH_URL
 
 import find_new
@@ -201,12 +201,12 @@ def test_add_product_for_processing(tables):
         'wkt': 'someWKT',
     }
 
-    mock_response = {
-        'results': [
-            # TODO add neighbors
-        ]
-    }
-    responses.add(responses.GET, _BASLINE_API, json.dumps(mock_response))
+    # mock_response = {
+    #     'results': [
+    #         # TODO add neighbors
+    #     ]
+    # }
+    # responses.add(responses.GET, _BASLINE_API, json.dumps(mock_response))
 
     hyp3_response = {
         'jobs': [
@@ -250,8 +250,8 @@ def test_lambda_handler(tables):
             'wkt': 'foo'
         },
     ]
-    for item in mock_events:
-        tables.event_table.put_item(Item=item)
+    for mock_hyp3_response in mock_events:
+        tables.event_table.put_item(Item=mock_hyp3_response)
 
     mock_response = {
         'results': [
@@ -280,12 +280,22 @@ def test_lambda_handler(tables):
     }
     responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_response))
 
-    mock_response = {
-        'results': [
-            # TODO add neighbors
-        ]
-    }
-    responses.add(responses.GET, _BASLINE_API, json.dumps(mock_response))
+    mock_neighbors = [
+            {
+                'granuleName': 'neighbor1',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 123,
+                'frame': 456,
+                'wkt': 'someWKT',
+            },
+            {
+                'granuleName': 'neighbor2',
+                'startTime': '2020-01-01T00:00:00+00:00',
+                'path': 456,
+                'frame': 789,
+                'wkt': 'someWKT',
+            },
+    ]
 
     mock_products = [
         {
@@ -317,28 +327,52 @@ def test_lambda_handler(tables):
             ]
         },
     ]
-    for item in mock_products:
-        tables.product_table.put_item(Item=item)
+    for mock_hyp3_response in mock_products:
+        tables.product_table.put_item(Item=mock_hyp3_response)
+
     responses.add(responses.GET, AUTH_URL)
+    mock_hyp3_responses =[
+        {
+            'jobs': [
+                {
+                    'job_id': 'rtc',
+                    'job_type': 'RTC_GAMMA',
+                    'request_time': '2020-06-04T18:00:03+00:00',
+                    'status_code': 'PENDING',
+                    'user_id': 'some_user',
+                }
+            ],
+        },
+        {
+            'jobs': [
+                {
+                    'job_id': 'insar1',
+                    'job_type': 'INSAR_GAMMA',
+                    'request_time': '2020-06-04T18:00:03+00:00',
+                    'status_code': 'PENDING',
+                    'user_id': 'some_user',
+                }
+            ],
+        },
+        {
+            'jobs': [
+                {
+                    'job_id': 'insar2',
+                    'job_type': 'INSAR_GAMMA',
+                    'request_time': '2020-06-04T18:00:03+00:00',
+                    'status_code': 'PENDING',
+                    'user_id': 'some_user',
+                }
+            ],
+        },
+    ]
+    for mock_hyp3_response in mock_hyp3_responses:
+        responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
 
-    hyp3_response = {
-        'jobs': [
-            {
-                'job_id': 'foo',
-                'job_type': 'RTC_GAMMA',
-                'name': 'event_id1',
-                'request_time': '2020-06-04T18:00:03+00:00',
-                'user_id': 'some_user',
-                'status_code': 'PENDING',
-            }
-        ],
-    }
-    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(hyp3_response))
-    # TODO mock submission of insar jobs
-
-    find_new.lambda_handler(None, None)
+    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: mock_neighbors):
+        find_new.lambda_handler(None, None)
 
     products = tables.product_table.scan()['Items']
 
-    assert len(products) == 3
-    assert [product['granules'][0]['granule_name'] for product in products] == ['granule1', 'granule2', 'granule3']
+    assert len(products) == 5
+    assert [product['granules'][0]['granule_name'] for product in products] == ['granule1', 'granule2', 'granule3', 'granule3', 'granule3']
