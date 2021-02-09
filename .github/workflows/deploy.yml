@@ -4,19 +4,17 @@ name: Deploy to AWS
 on:
   push:
     branches:
+      - main
       - develop
 
 env:
-  STACK_NAME: hyp3-event-monitoring-test
   AWS_REGION: us-west-2
   TEMPLATE_BUCKET: cf-templates-aubvn3i9olmk-us-west-2
   AWS_ACCESS_KEY_ID: ${{ secrets.V2_AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.V2_AWS_SECRET_ACCESS_KEY }}
   CLOUDFORMATION_ROLE_ARN: ${{ secrets.CLOUDFORMATION_ROLE_ARN }}
-
   EDL_USERNAME: ${{ secrets.EDL_USERNAME }}
   EDL_PASSWORD: ${{ secrets.EDL_PASSWORD }}
-  HYP3_URL: https://hyp3-api.asf.alaska.edu
 
 jobs:
 
@@ -28,6 +26,16 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.TOOLS_BOT_PAK }}
+
+      - if: endsWith(github.ref, '/develop')
+        run: |
+          echo "STACK_NAME=hyp3-event-monitoring-test" >> $GITHUB_ENV
+          echo "HYP3_URL=https://hyp3-test-api.asf.alaska.edu" >> $GITHUB_ENV
+
+      - if: endsWith(github.ref, '/main')
+        run: |
+          echo "STACK_NAME=hyp3-event-monitoring" >> $GITHUB_ENV
+          echo "HYP3_URL=https://hyp3-api.asf.alaska.edu" >> $GITHUB_ENV
 
       - uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -61,3 +69,42 @@ jobs:
                 EDLUsername="${EDL_USERNAME}" \
                 EDLPassword="${EDL_PASSWORD}" \
                 HyP3URL="${HYP3_URL}"
+
+      - name: Get associated PR
+        if: github.ref == 'refs/heads/main'
+        uses: helaili/github-graphql-action@2.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOOLS_BOT_PAK }}
+        with:
+          query: .github/queries/asssociated-pr.query.yml
+          outputFile: pr.json
+          owner: ASFHyP3
+          name: hyp3-event-monitoring
+          sha: ${{ github.sha }}
+
+      - name: Get PR labels
+        if: github.ref == 'refs/heads/main'
+        uses: helaili/github-graphql-action@2.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOOLS_BOT_PAK }}
+        with:
+          query: .github/queries/pr-labels.query.yml
+          outputFile: labels.json
+          owner: ASFHyP3
+          name: hyp3-event-monitoring
+
+      - name: Tag version
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git fetch origin +refs/tags/*:refs/tags/*
+          git config user.email "UAF-asf-apd@alaska.edu"
+          git config user.name "tools-bot"
+          LABEL_QUERY='.data.repository.pullRequest.labels.nodes[].name'
+          SELECT='select(. == "major" or . == "minor" or . == "patch")'
+          BUMP_PART=$(jq --raw-output  "${LABEL_QUERY} | ${SELECT}" labels.json | sort | head -1)
+          PR_QUERY='.data.repository.commit.associatedPullRequests.edges[0].node.title'
+          TAG_MSG=$(jq --raw-output "${PR_QUERY}"  pr.json)
+          bump2version --current-version $(git describe --abbrev=0) \
+              --tag --tag-message "${TAG_MSG}" "${BUMP_PART}"
+          git push --tags
+          echo "Tagged version $(git describe --abbrev=0) and pushed back to repo"
