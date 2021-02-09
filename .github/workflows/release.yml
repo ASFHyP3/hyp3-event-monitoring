@@ -21,23 +21,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOOLS_BOT_PAK }}
           ALLOW_TAG_PREFIX: "true"
           RELEASE_NAME_PREFIX: "HyP3 Event Monitoring "
-
-      - name: Attempt fast-forward develop from master
-        run: |
-          git fetch --prune
-          git checkout develop && git pull --ff-only
-          git merge --ff-only origin/master
-          git push
-      - name: Open PR to bring master back to develop
-        if: ${{ failure() }}
-        uses: repo-sync/pull-request@v2
-        with:
-          source_branch: master
-          destination_branch: develop
-          pr_title: Pulling ${{ github.ref }} into default
-          pr_body: Fast-forward of master to default failed!
-          pr_assignee: ${{ github.actor }}
-          pr_label: tools-bot
-          pr_draft: false
-          pr_allow_empty: true
-          github_token: ${{ secrets.TOOLS_BOT_PAK }}
