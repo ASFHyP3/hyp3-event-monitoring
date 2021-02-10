@@ -55,7 +55,7 @@ def format_product(job, event_id, granules):
 
 
 def submit_jobs_for_granule(hyp3, granule, event_id):
-    print(f'submitting jobs for granule {granule}')
+    print(f'submitting jobs for granule {granule["granuleName"]}')
 
     rtc_job = hyp3.submit_rtc_job(granule=granule['granuleName'])
     rtc_product = format_product(rtc_job, event_id, [granule])
