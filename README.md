@@ -14,9 +14,9 @@ A software stack that allows automatic submission of jobs to hyp3 over a specifi
 ### Prerequisites
 These resources are required for a successful deployment, but managed separately:
 
-- HyP3 target deplotment
+- HyP3 target deployment (https://hyp3-api.asf.alaska.edu)
 - S3 bucket for CloudFormation deployment artifacts
-- EarthData Login account authorized to download data from ASF
+- EarthData Login account authorized to download data from ASF (For submitting jobs to HyP3)
   - If submitting more jobs that the defualt hyp3 quota allows you may need to have an incresed quota
 - IAM user and roles for automated CloudFormation deployments (if desired)
 
@@ -24,11 +24,6 @@ These resources are required for a successful deployment, but managed separately
 Review the parameters in [cloudformation.yml](cloudformation.yml) for deploy time configuration options.
 
 ### Deploy with CloudFormation
-
-- Install dependencies for build and run
-```sh
-pip install -r requirements-all.txt
-```
 
 - Install dependencies for each component (requires pip for python 3.8)
 
@@ -54,8 +49,8 @@ aws cloudformation deploy \
             --role-arn <arn for your deployment user/role> \
             --capabilities CAPABILITY_IAM \
             --parameter-overrides \
-                "EDLUsername=<EDL Username to download products>" \
-                "EDLPassword=<EDL Password to download products>" \
+                "EDLUsername=<EDL Username to submit jobs to HyP3>" \
+                "EDLPassword=<EDL Password to submit jobs to HyP3>" \
                 "HyP3URL=<URL to a HyP3 deployment for the stack to use"
 
 ```
