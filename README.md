@@ -57,9 +57,9 @@ aws cloudformation deploy \
 
 
 ## Testing
-The HyP3 API source contains test files in `tests/api/`. To run them you need to do a bit of setup first.
+The HyP3 Event Monitoring source contains test files in `tests/`. To run them you need to do a bit of setup first.
 
-- Add hyp3-api and tests to python path
+- Add components to python path
 ```sh
 export PYTHONPATH="${PYTHONPATH}:`pwd`find_new/src:`pwd`api/src:`pwd`harvest_products/src"
 ```
