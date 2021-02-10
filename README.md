@@ -14,7 +14,7 @@ A software stack that allows automatic submission of jobs to hyp3 over a specifi
 ### Prerequisites
 These resources are required for a successful deployment, but managed separately:
 
-- HyP3 target deployment (eg. https://hyp3-api.asf.alaska.edu)
+- HyP3 target deployment (e.g. https://hyp3-api.asf.alaska.edu)
 - S3 bucket for CloudFormation deployment artifacts
 - Earthdata Login account authorized to download data from ASF (For submitting jobs to HyP3)
   - If submitting more jobs that the defualt hyp3 quota allows you may need to have an incresed quota
