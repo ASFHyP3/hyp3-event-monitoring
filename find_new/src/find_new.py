@@ -1,9 +1,11 @@
-from datetime import timezone
+from datetime import datetime, timezone
 from os import environ
+from uuid import uuid4
 
 import requests
 from dateutil import parser
 from hyp3_sdk import HyP3, asf_search
+from hyp3_sdk.exceptions import HyP3Error
 
 from database import database
 
@@ -68,7 +70,20 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
         jobs.append(hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True))
         granule_lists.append([granule, neighbor])
 
-    batch = hyp3.submit_prepared_jobs(jobs)
+    try:
+        batch = hyp3.submit_prepared_jobs(jobs)
+    except HyP3Error as e:
+        print(e)
+        product = {
+            'product_id': str(uuid4()),
+            'event_id': event_id,
+            'granules': [format_granule(granule)],
+            'processing_date': datetime.now(tz=timezone.utc).isoformat(timespec='seconds'),
+            'status_code': 'FAILED',
+            'message': str(e),
+        }
+        database.put_product(product)
+        return
 
     for job, granule_list in zip(batch.jobs, granule_lists):
         product = format_product(job, event_id, granule_list)
