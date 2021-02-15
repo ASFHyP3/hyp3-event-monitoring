@@ -57,15 +57,22 @@ def format_product(job, event_id, granules):
 def submit_jobs_for_granule(hyp3, granule, event_id):
     print(f'submitting jobs for granule {granule["granuleName"]}')
 
-    rtc_job = hyp3.submit_rtc_job(granule=granule['granuleName'])
-    rtc_product = format_product(rtc_job, event_id, [granule])
-    database.put_product(rtc_product)
+    jobs = []
+    granule_lists = []
+
+    jobs.append(hyp3.prepare_rtc_job(granule=granule['granuleName']))
+    granule_lists.append([granule])
 
     neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
     for neighbor in neighbors:
-        insar_job = hyp3.submit_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)
-        insar_product = format_product(insar_job, event_id, [granule, neighbor])
-        database.put_product(insar_product)
+        jobs.append(hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True))
+        granule_lists.append([granule, neighbor])
+
+    batch = hyp3.submit_prepared_jobs(jobs)
+
+    for job, granule_list in zip(batch.jobs, granule_lists):
+        product = format_product(job, event_id, granule_list)
+        database.put_product(product)
 
 
 def handle_event(hyp3, event):
