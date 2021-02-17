@@ -195,22 +195,14 @@ def test_submit_jobs_for_granule(tables):
                     'request_time': '2020-06-04T18:00:03+00:00',
                     'user_id': 'some_user',
                     'status_code': 'PENDING',
-                }
-            ],
-        },
-        {
-            'jobs': [
+                },
                 {
                     'job_id': '2',
                     'job_type': 'INSAR_GAMMA',
                     'request_time': '2020-06-04T18:00:03+00:00',
                     'user_id': 'some_user',
                     'status_code': 'PENDING',
-                }
-            ],
-        },
-        {
-            'jobs': [
+                },
                 {
                     'job_id': '3',
                     'job_type': 'INSAR_GAMMA',
@@ -372,22 +364,14 @@ def test_lambda_handler(tables):
                     'request_time': '2020-06-04T18:00:03+00:00',
                     'status_code': 'PENDING',
                     'user_id': 'some_user',
-                }
-            ],
-        },
-        {
-            'jobs': [
+                },
                 {
                     'job_id': 'insar1',
                     'job_type': 'INSAR_GAMMA',
                     'request_time': '2020-06-04T18:00:03+00:00',
                     'status_code': 'PENDING',
                     'user_id': 'some_user',
-                }
-            ],
-        },
-        {
-            'jobs': [
+                },
                 {
                     'job_id': 'insar2',
                     'job_type': 'INSAR_GAMMA',
