@@ -59,19 +59,19 @@ def format_product(job, event_id, granules):
 def submit_jobs_for_granule(hyp3, granule, event_id):
     print(f'submitting jobs for granule {granule["granuleName"]}')
 
-    jobs = []
+    prepared_jobs = []
     granule_lists = []
 
-    jobs.append(hyp3.prepare_rtc_job(granule=granule['granuleName']))
+    prepared_jobs.append(hyp3.prepare_rtc_job(granule=granule['granuleName']))
     granule_lists.append([granule])
 
     neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
     for neighbor in neighbors:
-        jobs.append(hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True))
+        prepared_jobs.append(hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True))
         granule_lists.append([granule, neighbor])
 
     try:
-        jobs = hyp3.submit_prepared_jobs(jobs)
+        submitted_jobs = hyp3.submit_prepared_jobs(prepared_jobs)
     except HyP3Error as e:
         print(e)
         product = {
@@ -85,7 +85,7 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
         database.put_product(product)
         return
 
-    for job, granule_list in zip(jobs, granule_lists):
+    for job, granule_list in zip(submitted_jobs, granule_lists):
         product = format_product(job, event_id, granule_list)
         database.put_product(product)
 
