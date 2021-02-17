@@ -12,11 +12,11 @@ A software stack that allows automatic submission of jobs to hyp3 over a specifi
 
 ## Usage
 Events represent an area of interest and a timeframe for which RTC and InSAR products will be generated. Events are
-managed (manually) as records in a dynamodb table:
+managed (manually) as records in a DynamoDB table:
 ```json
 {
   "event_id": "myEvent",
-  "wkt": "POINT (0, 0)",
+  "wkt": "POINT (0 0)",
   "processing_timeframe": {
     "start": "2021-02-01T00:00:00+00:00",
     "end": "2021-03-01T00:00:00+00:00"
