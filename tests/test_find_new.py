@@ -263,6 +263,31 @@ def test_submit_jobs_for_granule(tables):
 
 
 @responses.activate
+def test_submit_jobs_for_granule_bad_granule(tables):
+    responses.add(responses.GET, AUTH_URL)
+    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', status=400)
+
+    mock_neighbors = []
+
+    granule = {
+        'granuleName': 'reference',
+        'startTime': '2020-01-01T00:00:00+00:00',
+        'path': 123,
+        'frame': 456,
+        'wkt': 'someWKT',
+    }
+    event_id = 'event_id1'
+
+    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
+    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: mock_neighbors):
+        find_new.submit_jobs_for_granule(hyp3, granule, event_id)
+
+    products = tables.product_table.scan()['Items']
+    assert len(products) == 1
+    assert products[0]['status_code'] == 'FAILED'
+
+
+@responses.activate
 def test_lambda_handler(tables):
     mock_events = [
         {
