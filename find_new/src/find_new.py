@@ -67,7 +67,8 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
 
     neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
     for neighbor in neighbors:
-        prepared_jobs.append(hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True))
+        insar_job = hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)
+        prepared_jobs.append(insar_job)
         granule_lists.append([granule, neighbor])
 
     try:
