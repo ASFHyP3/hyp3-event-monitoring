@@ -71,7 +71,7 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
         granule_lists.append([granule, neighbor])
 
     try:
-        batch = hyp3.submit_prepared_jobs(jobs)
+        jobs = hyp3.submit_prepared_jobs(jobs)
     except HyP3Error as e:
         print(e)
         product = {
@@ -85,7 +85,7 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
         database.put_product(product)
         return
 
-    for job, granule_list in zip(batch.jobs, granule_lists):
+    for job, granule_list in zip(jobs, granule_lists):
         product = format_product(job, event_id, granule_list)
         database.put_product(product)
 
