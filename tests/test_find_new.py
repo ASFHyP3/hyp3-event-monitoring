@@ -47,7 +47,7 @@ def test_get_granules():
 
 
 @responses.activate
-def test_get_unproccesed_granules(tables):
+def test_get_unprocessed_granules(tables):
     mock_response = {
         'results': [
             {
@@ -179,50 +179,39 @@ def test_format_product():
         ],
         'job_type': 'BAR',
         'status_code': 'PENDING',
-        'processing_date': '2020-01-01T00:00:00+00:00'
+        'processing_date': '2020-01-01T00:00:00+00:00',
     }
 
 
 @responses.activate
 def test_submit_jobs_for_granule(tables):
     responses.add(responses.GET, AUTH_URL)
-    mock_hyp3_responses = [
-        {
-            'jobs': [
-                {
-                    'job_id': '1',
-                    'job_type': 'RTC_GAMMA',
-                    'request_time': '2020-06-04T18:00:03+00:00',
-                    'user_id': 'some_user',
-                    'status_code': 'PENDING',
-                }
-            ],
-        },
-        {
-            'jobs': [
-                {
-                    'job_id': '2',
-                    'job_type': 'INSAR_GAMMA',
-                    'request_time': '2020-06-04T18:00:03+00:00',
-                    'user_id': 'some_user',
-                    'status_code': 'PENDING',
-                }
-            ],
-        },
-        {
-            'jobs': [
-                {
-                    'job_id': '3',
-                    'job_type': 'INSAR_GAMMA',
-                    'request_time': '2020-06-04T18:00:03+00:00',
-                    'user_id': 'some_user',
-                    'status_code': 'PENDING',
-                }
-            ],
-        },
-    ]
-    for mock_hyp3_response in mock_hyp3_responses:
-        responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
+    mock_hyp3_response = {
+        'jobs': [
+            {
+                'job_id': '1',
+                'job_type': 'RTC_GAMMA',
+                'request_time': '2020-06-04T18:00:03+00:00',
+                'user_id': 'some_user',
+                'status_code': 'PENDING',
+            },
+            {
+                'job_id': '2',
+                'job_type': 'INSAR_GAMMA',
+                'request_time': '2020-06-04T18:00:03+00:00',
+                'user_id': 'some_user',
+                'status_code': 'PENDING',
+            },
+            {
+                'job_id': '3',
+                'job_type': 'INSAR_GAMMA',
+                'request_time': '2020-06-04T18:00:03+00:00',
+                'user_id': 'some_user',
+                'status_code': 'PENDING',
+            },
+        ],
+    }
+    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
 
     mock_neighbors = [
             {
@@ -271,19 +260,39 @@ def test_submit_jobs_for_granule(tables):
 
 
 @responses.activate
+def test_submit_jobs_for_granule_bad_granule(tables):
+    responses.add(responses.GET, AUTH_URL)
+    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', status=400)
+
+    granule = {
+        'granuleName': 'reference',
+        'startTime': '2020-01-01T00:00:00+00:00',
+        'path': 123,
+        'frame': 456,
+        'wkt': 'someWKT',
+    }
+    event_id = 'event_id1'
+
+    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
+    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
+        find_new.submit_jobs_for_granule(hyp3, granule, event_id)
+
+    products = tables.product_table.scan()['Items']
+    assert len(products) == 1
+    assert products[0]['status_code'] == 'FAILED'
+
+
+@responses.activate
 def test_lambda_handler(tables):
-    mock_events = [
-        {
-            'event_id': 'event_id1',
-            'processing_timeframe': {
-                'start': '2020-01-01T00:00:00+00:00',
-                'end': '2020-01-02T00:00:00+00:00'
-            },
-            'wkt': 'foo'
+    mock_event = {
+        'event_id': 'event_id1',
+        'processing_timeframe': {
+            'start': '2020-01-01T00:00:00+00:00',
+            'end': '2020-01-02T00:00:00+00:00',
         },
-    ]
-    for mock_hyp3_response in mock_events:
-        tables.event_table.put_item(Item=mock_hyp3_response)
+        'wkt': 'foo',
+    }
+    tables.event_table.put_item(Item=mock_event)
 
     mock_products = [
         {
@@ -297,8 +306,8 @@ def test_lambda_handler(tables):
                     'path': 123,
                     'frame': 456,
                     'wkt': 'someWKT',
-                }
-            ]
+                },
+            ],
         },
         {
             'product_id': str(uuid4()),
@@ -312,7 +321,7 @@ def test_lambda_handler(tables):
                     'frame': 789,
                     'wkt': 'someWKT',
                 },
-            ]
+            ],
         },
     ]
     for mock_product in mock_products:
@@ -340,7 +349,7 @@ def test_lambda_handler(tables):
                 'path': 123,
                 'frame': 456,
                 'wkt': 'someWKT',
-            }
+            },
         ]
     }
     responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_search_response))
@@ -363,43 +372,32 @@ def test_lambda_handler(tables):
     ]
 
     responses.add(responses.GET, AUTH_URL)
-    mock_hyp3_responses = [
-        {
-            'jobs': [
-                {
-                    'job_id': 'rtc',
-                    'job_type': 'RTC_GAMMA',
-                    'request_time': '2020-06-04T18:00:03+00:00',
-                    'status_code': 'PENDING',
-                    'user_id': 'some_user',
-                }
-            ],
-        },
-        {
-            'jobs': [
-                {
-                    'job_id': 'insar1',
-                    'job_type': 'INSAR_GAMMA',
-                    'request_time': '2020-06-04T18:00:03+00:00',
-                    'status_code': 'PENDING',
-                    'user_id': 'some_user',
-                }
-            ],
-        },
-        {
-            'jobs': [
-                {
-                    'job_id': 'insar2',
-                    'job_type': 'INSAR_GAMMA',
-                    'request_time': '2020-06-04T18:00:03+00:00',
-                    'status_code': 'PENDING',
-                    'user_id': 'some_user',
-                }
-            ],
-        },
-    ]
-    for mock_hyp3_response in mock_hyp3_responses:
-        responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
+    mock_hyp3_response = {
+        'jobs': [
+            {
+                'job_id': 'rtc',
+                'job_type': 'RTC_GAMMA',
+                'request_time': '2020-06-04T18:00:03+00:00',
+                'status_code': 'PENDING',
+                'user_id': 'some_user',
+            },
+            {
+                'job_id': 'insar1',
+                'job_type': 'INSAR_GAMMA',
+                'request_time': '2020-06-04T18:00:03+00:00',
+                'status_code': 'PENDING',
+                'user_id': 'some_user',
+            },
+            {
+                'job_id': 'insar2',
+                'job_type': 'INSAR_GAMMA',
+                'request_time': '2020-06-04T18:00:03+00:00',
+                'status_code': 'PENDING',
+                'user_id': 'some_user',
+            },
+        ],
+    }
+    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
 
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: mock_neighbors):
         find_new.lambda_handler(None, None)

@@ -58,6 +58,6 @@ def lambda_handler(event, context):
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     for product in products:
         print(f'Checking on product: {product["product_id"]}')
-        job = hyp3._get_job_by_id(product['product_id'])
+        job = hyp3.get_job_by_id(product['product_id'])
         if job.complete():
             update_product(product, job)
