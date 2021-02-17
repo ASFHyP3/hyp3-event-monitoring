@@ -179,7 +179,7 @@ def test_format_product():
         ],
         'job_type': 'BAR',
         'status_code': 'PENDING',
-        'processing_date': '2020-01-01T00:00:00+00:00'
+        'processing_date': '2020-01-01T00:00:00+00:00',
     }
 
 
@@ -208,7 +208,7 @@ def test_submit_jobs_for_granule(tables):
                 'request_time': '2020-06-04T18:00:03+00:00',
                 'user_id': 'some_user',
                 'status_code': 'PENDING',
-            }
+            },
         ],
     }
     responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
@@ -288,9 +288,9 @@ def test_lambda_handler(tables):
         'event_id': 'event_id1',
         'processing_timeframe': {
             'start': '2020-01-01T00:00:00+00:00',
-            'end': '2020-01-02T00:00:00+00:00'
+            'end': '2020-01-02T00:00:00+00:00',
         },
-        'wkt': 'foo'
+        'wkt': 'foo',
     }
     tables.event_table.put_item(Item=mock_event)
 
@@ -306,8 +306,8 @@ def test_lambda_handler(tables):
                     'path': 123,
                     'frame': 456,
                     'wkt': 'someWKT',
-                }
-            ]
+                },
+            ],
         },
         {
             'product_id': str(uuid4()),
@@ -321,7 +321,7 @@ def test_lambda_handler(tables):
                     'frame': 789,
                     'wkt': 'someWKT',
                 },
-            ]
+            ],
         },
     ]
     for mock_product in mock_products:
@@ -349,7 +349,7 @@ def test_lambda_handler(tables):
                 'path': 123,
                 'frame': 456,
                 'wkt': 'someWKT',
-            }
+            },
         ]
     }
     responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_search_response))
@@ -394,7 +394,7 @@ def test_lambda_handler(tables):
                 'request_time': '2020-06-04T18:00:03+00:00',
                 'status_code': 'PENDING',
                 'user_id': 'some_user',
-            }
+            },
         ],
     }
     responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
