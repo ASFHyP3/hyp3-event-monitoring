@@ -59,6 +59,18 @@ def format_product(job, event_id, granules):
     }
 
 
+def add_invalid_product_record(event_id, granule, message):
+    product = {
+        'product_id': str(uuid4()),
+        'event_id': event_id,
+        'granules': [format_granule(granule)],
+        'processing_date': datetime.now(tz=timezone.utc).isoformat(timespec='seconds'),
+        'status_code': 'FAILED',
+        'message': message,
+    }
+    database.put_product(product)
+
+
 def submit_jobs_for_granule(hyp3, granule, event_id):
     print(f'submitting jobs for granule {granule["granuleName"]}')
 
@@ -71,7 +83,7 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
     try:
         neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
     except requests.HTTPError as e:
-        raise ProductException(f'unable to find neighbors for {granule["granuleName"]}') from e
+        raise ProductException()
 
     for neighbor in neighbors:
         insar_job = hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)
@@ -81,17 +93,7 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
     try:
         submitted_jobs = hyp3.submit_prepared_jobs(prepared_jobs)
     except HyP3Error as e:
-        print(e)
-        product = {
-            'product_id': str(uuid4()),
-            'event_id': event_id,
-            'granules': [format_granule(granule)],
-            'processing_date': datetime.now(tz=timezone.utc).isoformat(timespec='seconds'),
-            'status_code': 'FAILED',
-            'message': str(e),
-        }
-        database.put_product(product)
-        return
+        raise ProductException()
 
     for job, granule_list in zip(submitted_jobs, granule_lists):
         product = format_product(job, event_id, granule_list)
@@ -105,7 +107,7 @@ def handle_event(hyp3, event):
         try:
             submit_jobs_for_granule(hyp3, granule, event['event_id'])
         except ProductException as e:
-            print(f'unable to submit product: {e}')
+            add_invalid_product_record(event['event_id'], granule, str(e))
 
 
 def lambda_handler(event, context):
