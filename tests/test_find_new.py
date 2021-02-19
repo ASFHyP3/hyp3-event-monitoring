@@ -241,7 +241,7 @@ def test_submit_jobs_for_granule(tables):
 
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: mock_neighbors):
-        find_new.submit_jobs_for_granule(hyp3, granule, event_id)
+        find_new.submit_jobs_for_granule(hyp3, event_id, granule)
 
     products = tables.product_table.scan()['Items']
 
@@ -275,7 +275,7 @@ def test_submit_jobs_for_granule_bad_granule(tables):
 
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
-        find_new.submit_jobs_for_granule(hyp3, granule, event_id)
+        find_new.submit_jobs_for_granule(hyp3, event_id, granule)
 
     products = tables.product_table.scan()['Items']
     assert len(products) == 1

@@ -11,9 +11,8 @@ from database import database
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
-class ProductException(Exception):
-    """thrown when product submission encounters a known error
-     that should be retried but not block other Products from being submitted"""
+class GranuleError(Exception):
+    """Raised for granules for which jobs will not succeed"""
 
 def get_granules(event):
     search_params = {
@@ -71,7 +70,7 @@ def add_invalid_product_record(event_id, granule, message):
     database.put_product(product)
 
 
-def submit_jobs_for_granule(hyp3, granule, event_id):
+def submit_jobs_for_granule(hyp3, event_id, granule):
     print(f'submitting jobs for granule {granule["granuleName"]}')
 
     prepared_jobs = []
@@ -83,7 +82,7 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
     try:
         neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
     except requests.HTTPError as e:
-        raise ProductException()
+        raise GranuleError()
 
     for neighbor in neighbors:
         insar_job = hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)
@@ -93,7 +92,7 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
     try:
         submitted_jobs = hyp3.submit_prepared_jobs(prepared_jobs)
     except HyP3Error as e:
-        raise ProductException()
+        raise GranuleError()
 
     for job, granule_list in zip(submitted_jobs, granule_lists):
         product = format_product(job, event_id, granule_list)
@@ -105,8 +104,8 @@ def handle_event(hyp3, event):
     granules = get_unprocessed_granules(event)
     for granule in granules:
         try:
-            submit_jobs_for_granule(hyp3, granule, event['event_id'])
-        except ProductException as e:
+            submit_jobs_for_granule(hyp3, event['event_id'], granule)
+        except GranuleError as e:
             add_invalid_product_record(event['event_id'], granule, str(e))
 
 
