@@ -11,6 +11,9 @@ from database import database
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
+class ProductException(Exception):
+    """thrown when product submission encounters a known error
+     that should be retried but not block other Products from being submitted"""
 
 def get_granules(event):
     search_params = {
@@ -65,7 +68,11 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
     prepared_jobs.append(hyp3.prepare_rtc_job(granule=granule['granuleName']))
     granule_lists.append([granule])
 
-    neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
+    try:
+        neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
+    except requests.HTTPError as e:
+        raise ProductException(f'unable to find neighbors for {granule["granuleName"]}') from e
+
     for neighbor in neighbors:
         insar_job = hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)
         prepared_jobs.append(insar_job)
@@ -95,7 +102,10 @@ def handle_event(hyp3, event):
     print(f'processing event: {event["event_id"]}')
     granules = get_unprocessed_granules(event)
     for granule in granules:
-        submit_jobs_for_granule(hyp3, granule, event['event_id'])
+        try:
+            submit_jobs_for_granule(hyp3, granule, event['event_id'])
+        except ProductException as e:
+            print(f'unable to submit product: {e}')
 
 
 def lambda_handler(event, context):
