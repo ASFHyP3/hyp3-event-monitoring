@@ -11,8 +11,10 @@ from database import database
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
+
 class GranuleError(Exception):
     """Raised for granules for which jobs will not succeed"""
+
 
 def get_granules(event):
     search_params = {
@@ -81,7 +83,7 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
 
     try:
         neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
-    except requests.HTTPError as e:
+    except requests.HTTPError:
         raise GranuleError()
 
     for neighbor in neighbors:
@@ -91,7 +93,7 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
 
     try:
         submitted_jobs = hyp3.submit_prepared_jobs(prepared_jobs)
-    except HyP3Error as e:
+    except HyP3Error:
         raise GranuleError()
 
     for job, granule_list in zip(submitted_jobs, granule_lists):

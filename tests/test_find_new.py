@@ -2,9 +2,13 @@ import json
 from os import environ
 from uuid import uuid4
 
+import pytest
+import requests
 import responses
 from dateutil import parser
 from hyp3_sdk import HyP3
+from hyp3_sdk.asf_search import _BASELINE_API
+from hyp3_sdk.exceptions import HyP3Error
 from hyp3_sdk.util import AUTH_URL
 from mock import patch
 
@@ -183,6 +187,24 @@ def test_format_product():
     }
 
 
+def test_add_invalid_product_record(tables):
+    granule = {
+        'granuleName': 'granule1',
+        'startTime': '2020-01-01T00:00:00+00:00',
+        'path': 123,
+        'frame': 456,
+        'wkt': 'someWKT',
+    }
+    find_new.add_invalid_product_record('event_id1', granule, 'ExceptionMessage')
+
+    response = tables.product_table.scan()['Items']
+
+    assert len(response) == 1
+    assert response[0]['status_code'] == 'FAILED'
+    assert response[0]['granules'][0]['granule_name'] == 'granule1'
+    assert response[0]['event_id'] == 'event_id1'
+
+
 @responses.activate
 def test_submit_jobs_for_granule(tables):
     responses.add(responses.GET, AUTH_URL)
@@ -214,20 +236,20 @@ def test_submit_jobs_for_granule(tables):
     responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
 
     mock_neighbors = [
-            {
-                'granuleName': 'neighbor1',
-                'startTime': '2020-01-01T00:00:00+00:00',
-                'path': 123,
-                'frame': 456,
-                'wkt': 'someWKT',
-            },
-            {
-                'granuleName': 'neighbor2',
-                'startTime': '2020-01-01T00:00:00+00:00',
-                'path': 456,
-                'frame': 789,
-                'wkt': 'someWKT',
-            },
+        {
+            'granuleName': 'neighbor1',
+            'startTime': '2020-01-01T00:00:00+00:00',
+            'path': 123,
+            'frame': 456,
+            'wkt': 'someWKT',
+        },
+        {
+            'granuleName': 'neighbor2',
+            'startTime': '2020-01-01T00:00:00+00:00',
+            'path': 456,
+            'frame': 789,
+            'wkt': 'someWKT',
+        },
     ]
 
     granule = {
@@ -275,11 +297,14 @@ def test_submit_jobs_for_granule_bad_granule(tables):
 
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
-        find_new.submit_jobs_for_granule(hyp3, event_id, granule)
+        with pytest.raises(find_new.GranuleError)as e:
+            find_new.submit_jobs_for_granule(hyp3, event_id, granule)
+            assert type(e.__context__) == HyP3Error
 
-    products = tables.product_table.scan()['Items']
-    assert len(products) == 1
-    assert products[0]['status_code'] == 'FAILED'
+    responses.add(responses.GET, _BASELINE_API, status=400)
+    with pytest.raises(find_new.GranuleError) as e:
+        find_new.submit_jobs_for_granule(hyp3, event_id, granule)
+        assert type(e.__context__) == requests.HTTPError
 
 
 @responses.activate
@@ -355,20 +380,20 @@ def test_lambda_handler(tables):
     responses.add(responses.GET, find_new.SEARCH_URL, json.dumps(mock_search_response))
 
     mock_neighbors = [
-            {
-                'granuleName': 'neighbor1',
-                'startTime': '2020-01-01T00:00:00+00:00',
-                'path': 123,
-                'frame': 456,
-                'wkt': 'someWKT',
-            },
-            {
-                'granuleName': 'neighbor2',
-                'startTime': '2020-01-01T00:00:00+00:00',
-                'path': 456,
-                'frame': 789,
-                'wkt': 'someWKT',
-            },
+        {
+            'granuleName': 'neighbor1',
+            'startTime': '2020-01-01T00:00:00+00:00',
+            'path': 123,
+            'frame': 456,
+            'wkt': 'someWKT',
+        },
+        {
+            'granuleName': 'neighbor2',
+            'startTime': '2020-01-01T00:00:00+00:00',
+            'path': 456,
+            'frame': 789,
+            'wkt': 'someWKT',
+        },
     ]
 
     responses.add(responses.GET, AUTH_URL)
