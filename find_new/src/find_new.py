@@ -12,6 +12,10 @@ from database import database
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
 
+class GranuleError(Exception):
+    """Raised for granules for which jobs will not succeed"""
+
+
 def get_granules(event):
     search_params = {
         'intersectsWith': event.get('wkt'),
@@ -56,7 +60,19 @@ def format_product(job, event_id, granules):
     }
 
 
-def submit_jobs_for_granule(hyp3, granule, event_id):
+def add_invalid_product_record(event_id, granule, message):
+    product = {
+        'product_id': str(uuid4()),
+        'event_id': event_id,
+        'granules': [format_granule(granule)],
+        'processing_date': datetime.now(tz=timezone.utc).isoformat(timespec='seconds'),
+        'status_code': 'FAILED',
+        'message': message,
+    }
+    database.put_product(product)
+
+
+def submit_jobs_for_granule(hyp3, event_id, granule):
     print(f'submitting jobs for granule {granule["granuleName"]}')
 
     prepared_jobs = []
@@ -65,7 +81,16 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
     prepared_jobs.append(hyp3.prepare_rtc_job(granule=granule['granuleName']))
     granule_lists.append([granule])
 
-    neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
+    try:
+        neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
+    except requests.HTTPError as e:
+        if e.response.status_code in range(400, 500):
+            raise GranuleError()
+        if e.response.status_code >= 500:
+            print(e)
+            print(f'unable to find neighbors for {granule["granuleName"]} skipping...')
+            return
+
     for neighbor in neighbors:
         insar_job = hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)
         prepared_jobs.append(insar_job)
@@ -73,18 +98,8 @@ def submit_jobs_for_granule(hyp3, granule, event_id):
 
     try:
         submitted_jobs = hyp3.submit_prepared_jobs(prepared_jobs)
-    except HyP3Error as e:
-        print(e)
-        product = {
-            'product_id': str(uuid4()),
-            'event_id': event_id,
-            'granules': [format_granule(granule)],
-            'processing_date': datetime.now(tz=timezone.utc).isoformat(timespec='seconds'),
-            'status_code': 'FAILED',
-            'message': str(e),
-        }
-        database.put_product(product)
-        return
+    except HyP3Error:
+        raise GranuleError()
 
     for job, granule_list in zip(submitted_jobs, granule_lists):
         product = format_product(job, event_id, granule_list)
@@ -95,7 +110,10 @@ def handle_event(hyp3, event):
     print(f'processing event: {event["event_id"]}')
     granules = get_unprocessed_granules(event)
     for granule in granules:
-        submit_jobs_for_granule(hyp3, granule, event['event_id'])
+        try:
+            submit_jobs_for_granule(hyp3, event['event_id'], granule)
+        except GranuleError as e:
+            add_invalid_product_record(event['event_id'], granule, str(e.__context__))
 
 
 def lambda_handler(event, context):
