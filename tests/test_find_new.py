@@ -324,6 +324,7 @@ def test_submit_jobs_basline_error(tables):
 
     assert response == []
 
+
 @responses.activate
 def test_lambda_handler(tables):
     mock_event = {
