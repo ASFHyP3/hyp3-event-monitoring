@@ -87,7 +87,8 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
         if e.response.status_code in range(400, 500):
             raise GranuleError()
         if e.response.status_code >= 500:
-            print(f'unable to find pairs for {granule["granuleName"]} skipping...')
+            print(e)
+            print(f'unable to find neighbors for {granule["granuleName"]} skipping...')
             return
 
     for neighbor in neighbors:
