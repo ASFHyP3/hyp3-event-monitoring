@@ -88,6 +88,7 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
             raise GranuleError()
         if e.response.status_code >= 500:
             print(f'unable to find pairs for {granule["granuleName"]} skipping...')
+            return
 
     for neighbor in neighbors:
         insar_job = hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)

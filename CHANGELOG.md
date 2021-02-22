@@ -7,7 +7,7 @@ and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [o.o.1](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.1...v0.0.2)
-### ADDED
+### Changed
 - Error handling for baseline api calls now skip on 500 errors and record 400 errors so that we retry when necessary.
 
 ## [0.0.1](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.0...v0.0.1)
