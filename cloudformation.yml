@@ -11,6 +11,9 @@ Parameters:
   EDLPassword:
     Type: String
 
+  EventManagerAccountIds:
+    Type: CommaDelimitedList
+
 Resources:
   LogBucket:
     Type: AWS::S3::Bucket
@@ -129,3 +132,28 @@ Resources:
         ProductTable: !Ref ProductTable
         EDLUsername: !Ref EDLUsername
         EDLPassword: !Ref EDLPassword
+
+  EventManagementRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Action: sts:AssumeRole
+          Principal:
+            AWS: !Ref EventManagerAccountIds
+          Effect: Allow
+      Policies:
+        - PolicyName: policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                Resource: !Sub "${EventTable.Arn}*"
