@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) 
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.3...v0.0.4)
+### Added
+- New IAM role that can be assumed by external AWS accounts to manage records in the Events table.
+
 ## [0.0.3](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.2...v0.0.3)
 ### Changed
 - Check for new granules is now run every 30 minutes instead of every hour.
