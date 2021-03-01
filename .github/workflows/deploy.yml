@@ -15,6 +15,7 @@ env:
   CLOUDFORMATION_ROLE_ARN: ${{ secrets.CLOUDFORMATION_ROLE_ARN }}
   EDL_USERNAME: ${{ secrets.EDL_USERNAME }}
   EDL_PASSWORD: ${{ secrets.EDL_PASSWORD }}
+  EVENT_MANAGER_ACCOUNT_IDS: ${{ secrets.EVENT_MANAGER_ACCOUNT_IDS }}
 
 jobs:
 
@@ -68,7 +69,8 @@ jobs:
             --parameter-overrides \
                 EDLUsername="${EDL_USERNAME}" \
                 EDLPassword="${EDL_PASSWORD}" \
-                HyP3URL="${HYP3_URL}"
+                HyP3URL="${HYP3_URL}" \
+                EventManagerAccountIds="${EVENT_MANAGER_ACCOUNT_IDS}"
 
       - name: Get associated PR
         if: github.ref == 'refs/heads/main'
