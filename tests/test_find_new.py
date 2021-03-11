@@ -3,12 +3,10 @@ from os import environ
 from uuid import uuid4
 
 import pytest
-import requests
 import responses
 from dateutil import parser
 from hyp3_sdk import HyP3
-from hyp3_sdk.asf_search import _BASELINE_API
-from hyp3_sdk.exceptions import HyP3Error
+from hyp3_sdk.exceptions import ASFSearchError, HyP3Error
 from hyp3_sdk.util import AUTH_URL
 from mock import patch
 
@@ -282,10 +280,7 @@ def test_submit_jobs_for_granule(tables):
 
 
 @responses.activate
-def test_submit_jobs_for_granule_bad_granule(tables):
-    responses.add(responses.GET, AUTH_URL)
-    responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', status=400)
-
+def test_submit_jobs_for_granule_submit_error(tables):
     granule = {
         'granuleName': 'reference',
         'startTime': '2020-01-01T00:00:00+00:00',
@@ -295,23 +290,18 @@ def test_submit_jobs_for_granule_bad_granule(tables):
     }
     event_id = 'event_id1'
 
+    responses.add(responses.GET, AUTH_URL)
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
-    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
-        with pytest.raises(find_new.GranuleError)as e:
-            find_new.submit_jobs_for_granule(hyp3, event_id, granule)
-            assert type(e.__context__) == HyP3Error
 
-    responses.add(responses.GET, _BASELINE_API, status=400)
-    with pytest.raises(find_new.GranuleError) as e:
-        find_new.submit_jobs_for_granule(hyp3, event_id, granule)
-        assert type(e.__context__) == requests.HTTPError
+    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
+        with patch('hyp3_sdk.HyP3.submit_prepared_jobs', side_effect=HyP3Error):
+            with pytest.raises(find_new.GranuleError)as e:
+                find_new.submit_jobs_for_granule(hyp3, event_id, granule)
+                assert type(e.__context__) == HyP3Error
 
 
 @responses.activate
-def test_submit_jobs_basline_error(tables):
-    responses.add(responses.GET, AUTH_URL)
-    responses.add(responses.GET, _BASELINE_API, status=500)
-    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
+def test_submit_jobs_for_granule_neighbor_error(tables):
     granule = {
         'granuleName': 'reference',
         'startTime': '2020-01-01T00:00:00+00:00',
@@ -319,10 +309,15 @@ def test_submit_jobs_basline_error(tables):
         'frame': 456,
         'wkt': 'someWKT',
     }
-    find_new.submit_jobs_for_granule(hyp3, 'event_id1', granule)
-    response = tables.product_table.scan()['Items']
+    event_id = 'event_id1'
 
-    assert response == []
+    responses.add(responses.GET, AUTH_URL)
+    hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
+
+    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', side_effect=ASFSearchError):
+        with pytest.raises(find_new.GranuleError) as e:
+            find_new.submit_jobs_for_granule(hyp3, event_id, granule)
+            assert type(e.__context__) == ASFSearchError
 
 
 @responses.activate
