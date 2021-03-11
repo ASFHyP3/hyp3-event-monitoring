@@ -85,6 +85,10 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
         neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
     except ASFSearchError:
         raise GranuleError()
+    except requests.HTTPError as e:
+        print(e)
+        print(f'Server error finding neighbors for {granule}, skipping...')
+        return
 
     for neighbor in neighbors:
         insar_job = hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)
@@ -95,6 +99,10 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
         submitted_jobs = hyp3.submit_prepared_jobs(prepared_jobs)
     except HyP3Error:
         raise GranuleError()
+    except requests.HTTPError as e:
+        print(e)
+        print(f'Server error submitting {granule} to HyP3, skipping...')
+        return
 
     for job, granule_list in zip(submitted_jobs, granule_lists):
         product = format_product(job, event_id, granule_list)

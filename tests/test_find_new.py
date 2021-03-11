@@ -9,6 +9,7 @@ from hyp3_sdk import HyP3
 from hyp3_sdk.exceptions import ASFSearchError, HyP3Error
 from hyp3_sdk.util import AUTH_URL
 from mock import patch
+from requests.exceptions import HTTPError
 
 import find_new
 
@@ -299,6 +300,11 @@ def test_submit_jobs_for_granule_submit_error(tables):
                 find_new.submit_jobs_for_granule(hyp3, event_id, granule)
                 assert type(e.__context__) == HyP3Error
 
+    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
+        with patch('hyp3_sdk.HyP3.submit_prepared_jobs', side_effect=HTTPError):
+            find_new.submit_jobs_for_granule(hyp3, event_id, granule)
+    assert tables.product_table.scan()['Items'] == []
+
 
 @responses.activate
 def test_submit_jobs_for_granule_neighbor_error(tables):
@@ -318,6 +324,10 @@ def test_submit_jobs_for_granule_neighbor_error(tables):
         with pytest.raises(find_new.GranuleError) as e:
             find_new.submit_jobs_for_granule(hyp3, event_id, granule)
             assert type(e.__context__) == ASFSearchError
+
+    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', side_effect=HTTPError):
+        find_new.submit_jobs_for_granule(hyp3, event_id, granule)
+    assert tables.product_table.scan()['Items'] == []
 
 
 @responses.activate
