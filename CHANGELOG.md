@@ -8,6 +8,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.0.5](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.4...v0.0.5)
 ### Changed
+- Improved handling of transient server errors (retryable) vs invalid granule errors (not retryable) in `find_new`
 - Upgraded to hyp3_sdk [v0.6.0](https://github.com/ASFHyP3/hyp3-sdk/blob/develop/CHANGELOG.md#060) from v0.5.0
 
 ## [0.0.4](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.3...v0.0.4)
