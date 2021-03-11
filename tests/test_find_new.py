@@ -296,9 +296,8 @@ def test_submit_jobs_for_granule_submit_error(tables):
 
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
         with patch('hyp3_sdk.HyP3.submit_prepared_jobs', side_effect=HyP3Error):
-            with pytest.raises(find_new.GranuleError) as e:
+            with pytest.raises(find_new.GranuleError):
                 find_new.submit_jobs_for_granule(hyp3, event_id, granule)
-                assert type(e.__context__) == HyP3Error
 
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
         with patch('hyp3_sdk.HyP3.submit_prepared_jobs', side_effect=HTTPError):
@@ -321,9 +320,8 @@ def test_submit_jobs_for_granule_neighbor_error(tables):
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
 
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', side_effect=ASFSearchError):
-        with pytest.raises(find_new.GranuleError) as e:
+        with pytest.raises(find_new.GranuleError):
             find_new.submit_jobs_for_granule(hyp3, event_id, granule)
-            assert type(e.__context__) == ASFSearchError
 
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', side_effect=HTTPError):
         find_new.submit_jobs_for_granule(hyp3, event_id, granule)
