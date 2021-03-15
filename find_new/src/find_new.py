@@ -116,6 +116,7 @@ def handle_event(hyp3, event):
         try:
             submit_jobs_for_granule(hyp3, event['event_id'], granule)
         except GranuleError as e:
+            print(e.__context__)
             add_invalid_product_record(event['event_id'], granule, str(e.__context__))
 
 
