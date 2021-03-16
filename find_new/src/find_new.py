@@ -87,7 +87,7 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
         raise GranuleError()
     except requests.HTTPError as e:
         print(e)
-        print(f'Server error finding neighbors for {granule}, skipping...')
+        print(f'Server error finding neighbors for {granule["granuleName"]}, skipping...')
         return
 
     for neighbor in neighbors:
@@ -101,7 +101,7 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
         raise GranuleError()
     except requests.HTTPError as e:
         print(e)
-        print(f'Server error submitting {granule} to HyP3, skipping...')
+        print(f'Server error submitting {granule["granuleName"]} to HyP3, skipping...')
         return
 
     for job, granule_list in zip(submitted_jobs, granule_lists):
@@ -117,7 +117,7 @@ def handle_event(hyp3, event):
             submit_jobs_for_granule(hyp3, event['event_id'], granule)
         except GranuleError as e:
             print(e.__context__)
-            print(f'Error submitting {granule} to HyP3, creating FAILED product record')
+            print(f'Error submitting {granule["granuleName"]} to HyP3, creating FAILED product record')
             add_invalid_product_record(event['event_id'], granule, str(e.__context__))
 
 
