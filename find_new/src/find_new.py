@@ -117,6 +117,7 @@ def handle_event(hyp3, event):
             submit_jobs_for_granule(hyp3, event['event_id'], granule)
         except GranuleError as e:
             print(e.__context__)
+            print(f'Error submitting {granule} to HyP3, creating FAILED product record')
             add_invalid_product_record(event['event_id'], granule, str(e.__context__))
 
 
