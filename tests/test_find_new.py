@@ -1,5 +1,6 @@
 import json
 from os import environ
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -8,7 +9,6 @@ from dateutil import parser
 from hyp3_sdk import HyP3
 from hyp3_sdk.exceptions import ASFSearchError, HyP3Error, ServerError
 from hyp3_sdk.util import AUTH_URL
-from unittest.mock import patch
 
 import find_new
 
