@@ -5,7 +5,7 @@ from uuid import uuid4
 import requests
 from dateutil import parser
 from hyp3_sdk import HyP3, asf_search
-from hyp3_sdk.exceptions import ASFSearchError, HyP3Error
+from hyp3_sdk.exceptions import ASFSearchError, HyP3Error, ServerError
 
 from database import database
 
@@ -85,7 +85,7 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
         neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
     except ASFSearchError:
         raise GranuleError()
-    except requests.HTTPError as e:
+    except ServerError as e:
         print(e)
         print(f'Server error finding neighbors for {granule["granuleName"]}, skipping...')
         return
@@ -99,7 +99,7 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
         submitted_jobs = hyp3.submit_prepared_jobs(prepared_jobs)
     except HyP3Error:
         raise GranuleError()
-    except requests.HTTPError as e:
+    except ServerError as e:
         print(e)
         print(f'Server error submitting {granule["granuleName"]} to HyP3, skipping...')
         return
