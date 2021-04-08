@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) 
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.5...v0.0.6)
+### Changed
+- Upgraded to hyp3_sdk [v1.1.0](https://github.com/ASFHyP3/hyp3-sdk/blob/develop/CHANGELOG.md#110) from v0.6.0
+  - RTC jobs are now submitted using the default `dem_name='copernicus'` setting added in hyp3_sdk v1.1.0
+
 ## [0.0.5](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.4...v0.0.5)
 ### Changed
 - Improved handling of transient server errors (retryable) vs invalid granule errors (not retryable) in `find_new`
