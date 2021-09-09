@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) 
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.7](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.6...v0.0.7)
+### Changed
+- Upgraded to hyp3_sdk [v1.3.2](https://github.com/ASFHyP3/hyp3-sdk/blob/develop/CHANGELOG.md#132) from v1.1.0
+  - InSAR jobs are now submitted using the custom `apply_water_mask=True` setting added in hyp3_sdk v1.3.2
+
 ## [0.0.6](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.5...v0.0.6)
 ### Changed
 - Upgraded to hyp3_sdk [v1.1.0](https://github.com/ASFHyP3/hyp3-sdk/blob/develop/CHANGELOG.md#110) from v0.6.0

@@ -91,7 +91,9 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
         return
 
     for neighbor in neighbors:
-        insar_job = hyp3.prepare_insar_job(granule['granuleName'], neighbor['granuleName'], include_look_vectors=True)
+        insar_job = hyp3.prepare_insar_job(
+            granule['granuleName'], neighbor['granuleName'], include_look_vectors=True, apply_water_mask=True
+        )
         prepared_jobs.append(insar_job)
         granule_lists.append([granule, neighbor])
 
