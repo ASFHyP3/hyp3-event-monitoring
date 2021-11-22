@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) 
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.0.8](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.7...v0.0.8)
+### Changed
+- Granted additional IAM permissions to the `harvest_products` Lambda function to support transfers of data products
+  smaller than 8 MB.
+
 ## [0.0.7](https://github.com/ASFHyP3/hyp3-event-monitoring/compare/v0.0.6...v0.0.7)
 ### Changed
 - Upgraded to hyp3_sdk [v1.3.2](https://github.com/ASFHyP3/hyp3-sdk/blob/develop/CHANGELOG.md#132) from v1.1.0

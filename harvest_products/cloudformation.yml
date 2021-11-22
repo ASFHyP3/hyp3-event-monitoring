@@ -45,10 +45,12 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
+                  - s3:GetObjectTagging
                 Resource: "arn:aws:s3:::*/*"
               - Effect: Allow
                 Action:
                   - s3:PutObject
+                  - s3:PutObjectTagging
                 Resource: !Sub "arn:aws:s3:::${ProductBucket}/*"
 
   Lambda:
