@@ -10,6 +10,7 @@ Parameters:
 
   EDLPassword:
     Type: String
+    NoEcho: true
 
   EventManagerAccountIds:
     Type: CommaDelimitedList
