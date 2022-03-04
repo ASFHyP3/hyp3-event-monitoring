@@ -15,6 +15,7 @@ Parameters:
 
   EDLPassword:
     Type: String
+    NoEcho: true
 
 Resources:
   Role:
