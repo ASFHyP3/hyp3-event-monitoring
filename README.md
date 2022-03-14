@@ -89,7 +89,7 @@ The HyP3 Event Monitoring source contains test files in `tests/`. To run them yo
 
 - Add components to python path
 ```sh
-export PYTHONPATH="${PYTHONPATH}:`pwd`find_new/src:`pwd`api/src:`pwd`harvest_products/src"
+export PYTHONPATH="${PYTHONPATH}:`pwd`/find_new/src:`pwd`/api/src:`pwd`/harvest_products/src"
 ```
 - Setup environment variables
 ```sh
@@ -97,7 +97,7 @@ export $(cat tests/cfg.env | xargs)
 ```
 - Install test requirements
 ```sh
-pip install -r apps/api/requirements-all.txt
+pip install -r requirements-all.txt
 ```
 
 - Run tests
