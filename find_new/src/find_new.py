@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from os import environ
+from typing import List
 from uuid import uuid4
 
 import asf_search
@@ -9,7 +10,6 @@ from hyp3_sdk import HyP3
 from hyp3_sdk.exceptions import HyP3Error, ServerError
 
 from database import database
-from typing import List
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
