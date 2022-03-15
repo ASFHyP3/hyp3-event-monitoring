@@ -9,6 +9,7 @@ from hyp3_sdk import HyP3
 from hyp3_sdk.exceptions import HyP3Error, ServerError
 
 from database import database
+from typing import List
 
 SEARCH_URL = 'https://api.daac.asf.alaska.edu/services/search/param'
 
@@ -73,7 +74,7 @@ def add_invalid_product_record(event_id, granule, message):
     database.put_product(product)
 
 
-def get_neighbors(granule_name: str, max_neighbors: int = 2) -> list[dict]:
+def get_neighbors(granule_name: str, max_neighbors: int = 2) -> List[dict]:
     results = asf_search.product_search([granule_name])
     assert len(results) == 1
     granule: asf_search.ASFProduct = results[0]
