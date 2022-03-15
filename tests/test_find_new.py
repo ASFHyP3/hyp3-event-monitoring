@@ -3,11 +3,12 @@ from os import environ
 from unittest.mock import patch
 from uuid import uuid4
 
+import asf_search
 import pytest
 import responses
 from dateutil import parser
 from hyp3_sdk import HyP3
-from hyp3_sdk.exceptions import ASFSearchError, HyP3Error, ServerError
+from hyp3_sdk.exceptions import HyP3Error, ServerError
 from hyp3_sdk.util import AUTH_URL
 
 import find_new
@@ -318,13 +319,11 @@ def test_submit_jobs_for_granule_neighbor_error(tables):
     responses.add(responses.GET, AUTH_URL)
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
 
-    # TODO preserve exception behavior?
-    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', side_effect=ASFSearchError):
+    with patch('find_new.get_neighbors', side_effect=asf_search.ASFSearch4xxError):
         with pytest.raises(find_new.GranuleError):
             find_new.submit_jobs_for_granule(hyp3, event_id, granule)
 
-    # TODO preserve exception behavior?
-    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', side_effect=ServerError):
+    with patch('find_new.get_neighbors', side_effect=asf_search.ASFSearchError):
         find_new.submit_jobs_for_granule(hyp3, event_id, granule)
     assert tables.product_table.scan()['Items'] == []
 

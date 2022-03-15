@@ -6,7 +6,7 @@ import asf_search
 import requests
 from dateutil import parser
 from hyp3_sdk import HyP3
-from hyp3_sdk.exceptions import ASFSearchError, HyP3Error, ServerError
+from hyp3_sdk.exceptions import HyP3Error, ServerError
 
 from database import database
 
@@ -89,6 +89,13 @@ def get_neighbors(granule_name: str, max_neighbors: int = 2) -> list[dict]:
             'output': 'jsonlite'
         }
     )
+
+    status_code = str(response.status_code)
+    if status_code[0] == '4':
+        raise asf_search.ASFSearch4xxError()
+    elif status_code[0] == '5':
+        raise asf_search.ASFSearch5xxError()
+
     return response.json()['results']
 
 
@@ -101,12 +108,11 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
     prepared_jobs.append(hyp3.prepare_rtc_job(granule=granule['granuleName']))
     granule_lists.append([granule])
 
-    # TODO preserve exception behavior? (these are hyp3_sdk errors not raised by get_neighbors)
     try:
         neighbors = get_neighbors(granule['granuleName'])
-    except ASFSearchError:
+    except asf_search.ASFSearch4xxError:
         raise GranuleError()
-    except ServerError as e:
+    except asf_search.ASFSearchError as e:
         print(e)
         print(f'Server error finding neighbors for {granule["granuleName"]}, skipping...')
         return
