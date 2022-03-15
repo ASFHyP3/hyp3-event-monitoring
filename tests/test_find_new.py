@@ -260,7 +260,7 @@ def test_submit_jobs_for_granule(tables):
     event_id = 'event_id1'
 
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
-    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: mock_neighbors):
+    with patch('find_new.get_neighbors', lambda x: mock_neighbors):
         find_new.submit_jobs_for_granule(hyp3, event_id, granule)
 
     products = tables.product_table.scan()['Items']
@@ -293,12 +293,12 @@ def test_submit_jobs_for_granule_submit_error(tables):
     responses.add(responses.GET, AUTH_URL)
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
 
-    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
+    with patch('find_new.get_neighbors', lambda x: []):
         with patch('hyp3_sdk.HyP3.submit_prepared_jobs', side_effect=HyP3Error):
             with pytest.raises(find_new.GranuleError):
                 find_new.submit_jobs_for_granule(hyp3, event_id, granule)
 
-    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: []):
+    with patch('find_new.get_neighbors', lambda x: []):
         with patch('hyp3_sdk.HyP3.submit_prepared_jobs', side_effect=ServerError):
             find_new.submit_jobs_for_granule(hyp3, event_id, granule)
     assert tables.product_table.scan()['Items'] == []
@@ -318,10 +318,12 @@ def test_submit_jobs_for_granule_neighbor_error(tables):
     responses.add(responses.GET, AUTH_URL)
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
 
+    # TODO preserve exception behavior?
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', side_effect=ASFSearchError):
         with pytest.raises(find_new.GranuleError):
             find_new.submit_jobs_for_granule(hyp3, event_id, granule)
 
+    # TODO preserve exception behavior?
     with patch('hyp3_sdk.asf_search.get_nearest_neighbors', side_effect=ServerError):
         find_new.submit_jobs_for_granule(hyp3, event_id, granule)
     assert tables.product_table.scan()['Items'] == []
@@ -444,7 +446,7 @@ def test_lambda_handler(tables):
     }
     responses.add(responses.POST, environ['HYP3_URL'] + '/jobs', json.dumps(mock_hyp3_response))
 
-    with patch('hyp3_sdk.asf_search.get_nearest_neighbors', lambda x: mock_neighbors):
+    with patch('find_new.get_neighbors', lambda x: mock_neighbors):
         find_new.lambda_handler(None, None)
 
     products = tables.product_table.scan()['Items']

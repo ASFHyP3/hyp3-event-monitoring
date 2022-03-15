@@ -2,9 +2,10 @@ from datetime import datetime, timezone
 from os import environ
 from uuid import uuid4
 
+import asf_search
 import requests
 from dateutil import parser
-from hyp3_sdk import HyP3, asf_search
+from hyp3_sdk import HyP3
 from hyp3_sdk.exceptions import ASFSearchError, HyP3Error, ServerError
 
 from database import database
@@ -72,6 +73,25 @@ def add_invalid_product_record(event_id, granule, message):
     database.put_product(product)
 
 
+def get_neighbors(granule_name: str, max_neighbors: int = 2) -> list[dict]:
+    results = asf_search.product_search([granule_name])
+    assert len(results) == 1
+    granule: asf_search.ASFProduct = results[0]
+
+    stack = asf_search.baseline_search.stack_from_product(granule)
+    stack = [item for item in stack if item.properties['temporalBaseline'] < 0]
+    neighbors = [item.properties['fileID'] for item in stack[-max_neighbors:]]
+
+    response = requests.post(
+        SEARCH_URL,
+        params={
+            'product_list': ','.join(neighbors),
+            'output': 'jsonlite'
+        }
+    )
+    return response.json()['results']
+
+
 def submit_jobs_for_granule(hyp3, event_id, granule):
     print(f'submitting jobs for granule {granule["granuleName"]}')
 
@@ -81,8 +101,9 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
     prepared_jobs.append(hyp3.prepare_rtc_job(granule=granule['granuleName']))
     granule_lists.append([granule])
 
+    # TODO preserve exception behavior? (these are hyp3_sdk errors not raised by get_neighbors)
     try:
-        neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
+        neighbors = get_neighbors(granule['granuleName'])
     except ASFSearchError:
         raise GranuleError()
     except ServerError as e:
