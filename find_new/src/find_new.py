@@ -74,8 +74,8 @@ def add_invalid_product_record(event_id, granule, message):
     database.put_product(product)
 
 
-def get_neighbors(granule_name: str, max_neighbors: int = 2) -> List[dict]:
-    results = asf_search.product_search([granule_name])
+def get_neighbors(product_name: str, max_neighbors: int = 2) -> List[dict]:
+    results = asf_search.product_search([product_name])
     assert len(results) == 1
     granule: asf_search.ASFProduct = results[0]
 
@@ -110,7 +110,7 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
     granule_lists.append([granule])
 
     try:
-        neighbors = get_neighbors(granule['granuleName'])
+        neighbors = get_neighbors(granule['productName'])
     except asf_search.ASFSearch4xxError:
         raise GranuleError()
     except asf_search.ASFSearchError as e:

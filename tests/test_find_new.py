@@ -253,6 +253,7 @@ def test_submit_jobs_for_granule(tables):
 
     granule = {
         'granuleName': 'reference',
+        'productName': 'reference-SLC',
         'startTime': '2020-01-01T00:00:00+00:00',
         'path': 123,
         'frame': 456,
@@ -284,6 +285,7 @@ def test_submit_jobs_for_granule(tables):
 def test_submit_jobs_for_granule_submit_error(tables):
     granule = {
         'granuleName': 'reference',
+        'productName': 'reference-SLC',
         'startTime': '2020-01-01T00:00:00+00:00',
         'path': 123,
         'frame': 456,
@@ -309,6 +311,7 @@ def test_submit_jobs_for_granule_submit_error(tables):
 def test_submit_jobs_for_granule_neighbor_error(tables):
     granule = {
         'granuleName': 'reference',
+        'productName': 'reference-SLC',
         'startTime': '2020-01-01T00:00:00+00:00',
         'path': 123,
         'frame': 456,
@@ -377,6 +380,7 @@ def test_lambda_handler(tables):
         'results': [
             {
                 'granuleName': 'granule1',
+                'productName': 'granule1-SLC',
                 'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 123,
                 'frame': 456,
@@ -384,6 +388,7 @@ def test_lambda_handler(tables):
             },
             {
                 'granuleName': 'granule2',
+                'productName': 'granule2-SLC',
                 'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 456,
                 'frame': 789,
@@ -391,6 +396,7 @@ def test_lambda_handler(tables):
             },
             {
                 'granuleName': 'granule3',
+                'productName': 'granule3-SLC',
                 'startTime': '2020-01-01T00:00:00+00:00',
                 'path': 123,
                 'frame': 456,
