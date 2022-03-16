@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) 
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.10]
+### Fixed
+- Replaced deprecated `hyp3_sdk.asf_search.get_nearest_neighbors` function with `find_new.get_neighbors`.
+
 ## [0.0.9]
 ### Security
 - Set `NoEcho` for EDL password in CloudFormation stacks.
