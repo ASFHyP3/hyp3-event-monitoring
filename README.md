@@ -97,7 +97,7 @@ export $(cat tests/cfg.env | xargs)
 ```
 - Install test requirements
 ```sh
-pip install -r requirements-all.txt
+python -m pip install -r requirements-all.txt
 ```
 
 - Run tests
