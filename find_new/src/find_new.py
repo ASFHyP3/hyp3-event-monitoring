@@ -110,7 +110,7 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
     granule_lists.append([granule])
 
     try:
-        neighbors = get_neighbors(granule['productName'])
+        neighbors = get_neighbors(granule['productID'])
     except asf_search.ASFSearch4xxError:
         raise GranuleError()
     except asf_search.ASFSearchError as e:
