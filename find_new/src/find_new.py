@@ -1,11 +1,13 @@
 from datetime import datetime, timezone
 from os import environ
+from typing import List
 from uuid import uuid4
 
+import asf_search
 import requests
 from dateutil import parser
-from hyp3_sdk import HyP3, asf_search
-from hyp3_sdk.exceptions import ASFSearchError, HyP3Error, ServerError
+from hyp3_sdk import HyP3
+from hyp3_sdk.exceptions import HyP3Error, ServerError
 
 from database import database
 
@@ -72,6 +74,32 @@ def add_invalid_product_record(event_id, granule, message):
     database.put_product(product)
 
 
+def get_neighbors(product_name: str, max_neighbors: int = 2) -> List[dict]:
+    results = asf_search.product_search([product_name])
+    assert len(results) == 1
+    granule: asf_search.ASFProduct = results[0]
+
+    stack = asf_search.baseline_search.stack_from_product(granule)
+    stack = [item for item in stack if item.properties['temporalBaseline'] < 0]
+    neighbors = [item.properties['fileID'] for item in stack[-max_neighbors:]]
+
+    response = requests.post(
+        SEARCH_URL,
+        params={
+            'product_list': ','.join(neighbors),
+            'output': 'jsonlite'
+        }
+    )
+
+    status_code = str(response.status_code)
+    if status_code[0] == '4':
+        raise asf_search.ASFSearch4xxError()
+    elif status_code[0] == '5':
+        raise asf_search.ASFSearch5xxError()
+
+    return response.json()['results']
+
+
 def submit_jobs_for_granule(hyp3, event_id, granule):
     print(f'submitting jobs for granule {granule["granuleName"]}')
 
@@ -82,10 +110,10 @@ def submit_jobs_for_granule(hyp3, event_id, granule):
     granule_lists.append([granule])
 
     try:
-        neighbors = asf_search.get_nearest_neighbors(granule['granuleName'])
-    except ASFSearchError:
+        neighbors = get_neighbors(granule['productID'])
+    except asf_search.ASFSearch4xxError:
         raise GranuleError()
-    except ServerError as e:
+    except asf_search.ASFSearchError as e:
         print(e)
         print(f'Server error finding neighbors for {granule["granuleName"]}, skipping...')
         return
