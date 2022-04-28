@@ -48,6 +48,13 @@ Resources:
         IgnorePublicAcls: True
         BlockPublicPolicy: False
         RestrictPublicBuckets: False
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods:
+              - GET
+              - HEAD
+            AllowedOrigins:
+              - "*.asf.alaska.edu"
 
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
