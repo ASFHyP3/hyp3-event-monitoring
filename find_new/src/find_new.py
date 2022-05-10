@@ -75,6 +75,9 @@ def add_invalid_product_record(event_id, granule, message):
 
 
 def get_neighbors(product_name: str, max_neighbors: int = 2) -> List[dict]:
+    if max_neighbors < 1:
+        raise ValueError(f"max_neighbors must be >= 1 but got {max_neighbors}")
+
     results = asf_search.product_search([product_name])
     assert len(results) == 1
     granule: asf_search.ASFProduct = results[0]
