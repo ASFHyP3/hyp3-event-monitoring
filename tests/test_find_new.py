@@ -211,12 +211,14 @@ def test_get_neighbors(mock_product_search: MagicMock, mock_stack_from_product: 
     mock_granule = NonCallableMagicMock()
     mock_product_search.return_value = [mock_granule]
 
-    mock_stack = [
-        NonCallableMagicMock(
-            properties={'fileID': f'file-{i}', 'temporalBaseline': i - 3}
-        ) for i in range(6)
+    mock_stack_from_product.return_value = [
+        NonCallableMagicMock(properties={'fileID': 'file-0', 'temporalBaseline': -3}),
+        NonCallableMagicMock(properties={'fileID': 'file-1', 'temporalBaseline': -2}),
+        NonCallableMagicMock(properties={'fileID': 'file-2', 'temporalBaseline': -1}),
+        NonCallableMagicMock(properties={'fileID': 'file-3', 'temporalBaseline': 0}),
+        NonCallableMagicMock(properties={'fileID': 'file-4', 'temporalBaseline': 1}),
+        NonCallableMagicMock(properties={'fileID': 'file-5', 'temporalBaseline': 2}),
     ]
-    mock_stack_from_product.return_value = mock_stack
 
     mock_response_1 = {'results': [{'granuleName': 'granule2'}]}
     params_1 = {'product_list': 'file-2', 'output': 'jsonlite'}
@@ -315,8 +317,9 @@ def test_get_neighbors_no_neighbors(mock_product_search: MagicMock, mock_stack_f
     assert find_new.get_neighbors('test-product') == []
 
     mock_stack_from_product.return_value = [
-        NonCallableMagicMock(properties={'fileID': f'file-{i}', 'temporalBaseline': i})
-        for i in range(3)
+        NonCallableMagicMock(properties={'fileID': 'file-0', 'temporalBaseline': 0}),
+        NonCallableMagicMock(properties={'fileID': 'file-1', 'temporalBaseline': 1}),
+        NonCallableMagicMock(properties={'fileID': 'file-2', 'temporalBaseline': 2}),
     ]
 
     assert find_new.get_neighbors('test-product') == []
