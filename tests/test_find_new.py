@@ -1,6 +1,6 @@
 import json
 from os import environ
-from unittest.mock import patch
+from unittest.mock import MagicMock, NonCallableMagicMock, call, patch
 from uuid import uuid4
 
 import asf_search
@@ -202,6 +202,138 @@ def test_add_invalid_product_record(tables):
     assert response[0]['status_code'] == 'FAILED'
     assert response[0]['granules'][0]['granule_name'] == 'granule1'
     assert response[0]['event_id'] == 'event_id1'
+
+
+@patch('asf_search.baseline_search.stack_from_product')
+@patch('asf_search.product_search')
+@responses.activate
+def test_get_neighbors(mock_product_search: MagicMock, mock_stack_from_product: MagicMock):
+    mock_granule = NonCallableMagicMock()
+    mock_product_search.return_value = [mock_granule]
+
+    mock_stack_from_product.return_value = [
+        NonCallableMagicMock(properties={'fileID': 'file-0', 'temporalBaseline': -3}),
+        NonCallableMagicMock(properties={'fileID': 'file-1', 'temporalBaseline': -2}),
+        NonCallableMagicMock(properties={'fileID': 'file-2', 'temporalBaseline': -1}),
+        NonCallableMagicMock(properties={'fileID': 'file-3', 'temporalBaseline': 0}),
+        NonCallableMagicMock(properties={'fileID': 'file-4', 'temporalBaseline': 1}),
+        NonCallableMagicMock(properties={'fileID': 'file-5', 'temporalBaseline': 2}),
+    ]
+
+    mock_response_1 = {'results': [{'granuleName': 'granule2'}]}
+    params_1 = {'product_list': 'file-2', 'output': 'jsonlite'}
+    responses.post(
+        url=find_new.SEARCH_URL,
+        body=json.dumps(mock_response_1),
+        match=[responses.matchers.query_param_matcher(params_1)]
+    )
+
+    mock_response_2 = {'results': [{'granuleName': 'granule1'}, {'granuleName': 'granule2'}]}
+    params_2 = {'product_list': 'file-1,file-2', 'output': 'jsonlite'}
+    responses.post(
+        url=find_new.SEARCH_URL,
+        body=json.dumps(mock_response_2),
+        match=[responses.matchers.query_param_matcher(params_2)]
+    )
+
+    mock_response_3 = {
+        'results': [{'granuleName': 'granule0'}, {'granuleName': 'granule1'}, {'granuleName': 'granule2'}]
+    }
+    params_3 = {'product_list': 'file-0,file-1,file-2', 'output': 'jsonlite'}
+    responses.post(
+        url=find_new.SEARCH_URL,
+        body=json.dumps(mock_response_3),
+        match=[responses.matchers.query_param_matcher(params_3)]
+    )
+
+    assert find_new.get_neighbors('test-product', max_neighbors=1) == mock_response_1['results']
+    assert find_new.get_neighbors('test-product', max_neighbors=2) == mock_response_2['results']
+    assert find_new.get_neighbors('test-product', max_neighbors=3) == mock_response_3['results']
+    assert find_new.get_neighbors('test-product', max_neighbors=100) == mock_response_3['results']
+
+    assert mock_product_search.mock_calls == [call(['test-product']) for _ in range(4)]
+    assert mock_stack_from_product.mock_calls == [call(mock_granule) for _ in range(4)]
+
+
+@patch('asf_search.baseline_search.stack_from_product')
+@patch('asf_search.product_search')
+@responses.activate
+def test_get_neighbors_response_400(mock_product_search: MagicMock, mock_stack_from_product: MagicMock):
+    mock_granule = NonCallableMagicMock()
+    mock_product_search.return_value = [mock_granule]
+
+    mock_stack_from_product.return_value = [
+        NonCallableMagicMock(properties={'fileID': 'file1', 'temporalBaseline': -1})
+    ]
+
+    params = {'product_list': 'file1', 'output': 'jsonlite'}
+    responses.post(
+        url=find_new.SEARCH_URL,
+        status=400,
+        match=[responses.matchers.query_param_matcher(params)]
+    )
+
+    with pytest.raises(asf_search.ASFSearch4xxError):
+        find_new.get_neighbors('test-product')
+
+    assert mock_product_search.mock_calls == [call(['test-product'])]
+    assert mock_stack_from_product.mock_calls == [call(mock_granule)]
+
+
+@patch('asf_search.baseline_search.stack_from_product')
+@patch('asf_search.product_search')
+@responses.activate
+def test_get_neighbors_response_500(mock_product_search: MagicMock, mock_stack_from_product: MagicMock):
+    mock_granule = NonCallableMagicMock()
+    mock_product_search.return_value = [mock_granule]
+
+    mock_stack_from_product.return_value = [
+        NonCallableMagicMock(properties={'fileID': 'file1', 'temporalBaseline': -1})
+    ]
+
+    params = {'product_list': 'file1', 'output': 'jsonlite'}
+    responses.post(
+        url=find_new.SEARCH_URL,
+        status=500,
+        match=[responses.matchers.query_param_matcher(params)]
+    )
+
+    with pytest.raises(asf_search.ASFSearch5xxError):
+        find_new.get_neighbors('test-product')
+
+    assert mock_product_search.mock_calls == [call(['test-product'])]
+    assert mock_stack_from_product.mock_calls == [call(mock_granule)]
+
+
+@patch('asf_search.baseline_search.stack_from_product')
+@patch('asf_search.product_search')
+@responses.activate
+def test_get_neighbors_no_neighbors(mock_product_search: MagicMock, mock_stack_from_product: MagicMock):
+    mock_granule = NonCallableMagicMock()
+    mock_product_search.return_value = [mock_granule]
+
+    mock_stack_from_product.return_value = []
+
+    assert find_new.get_neighbors('test-product') == []
+
+    mock_stack_from_product.return_value = [
+        NonCallableMagicMock(properties={'fileID': 'file-0', 'temporalBaseline': 0}),
+        NonCallableMagicMock(properties={'fileID': 'file-1', 'temporalBaseline': 1}),
+        NonCallableMagicMock(properties={'fileID': 'file-2', 'temporalBaseline': 2}),
+    ]
+
+    assert find_new.get_neighbors('test-product') == []
+
+    assert mock_product_search.mock_calls == [call(['test-product']) for _ in range(2)]
+    assert mock_stack_from_product.mock_calls == [call(mock_granule) for _ in range(2)]
+
+
+def test_get_neighbors_max_neighbors_error():
+    with pytest.raises(ValueError, match=r'.*max_neighbors.*'):
+        find_new.get_neighbors('test-product', max_neighbors=-1)
+
+    with pytest.raises(ValueError, match=r'.*max_neighbors.*'):
+        find_new.get_neighbors('test-product', max_neighbors=0)
 
 
 @responses.activate
