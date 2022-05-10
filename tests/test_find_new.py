@@ -256,40 +256,51 @@ def test_get_neighbors(mock_product_search: MagicMock, mock_stack_from_product: 
 @patch('asf_search.baseline_search.stack_from_product')
 @patch('asf_search.product_search')
 @responses.activate
-def test_get_neighbors_response_errors(mock_product_search: MagicMock, mock_stack_from_product: MagicMock):
+def test_get_neighbors_response_400(mock_product_search: MagicMock, mock_stack_from_product: MagicMock):
     mock_granule = NonCallableMagicMock()
     mock_product_search.return_value = [mock_granule]
 
-    params_400 = {'product_list': 'test-400-error', 'output': 'jsonlite'}
+    mock_stack_from_product.return_value = [
+        NonCallableMagicMock(properties={'fileID': 'file1', 'temporalBaseline': -1})
+    ]
+
+    params = {'product_list': 'file1', 'output': 'jsonlite'}
     responses.post(
         url=find_new.SEARCH_URL,
         status=400,
-        match=[responses.matchers.query_param_matcher(params_400)]
+        match=[responses.matchers.query_param_matcher(params)]
     )
-
-    params_500 = {'product_list': 'test-500-error', 'output': 'jsonlite'}
-    responses.post(
-        url=find_new.SEARCH_URL,
-        status=500,
-        match=[responses.matchers.query_param_matcher(params_500)]
-    )
-
-    mock_stack_from_product.return_value = [
-        NonCallableMagicMock(properties={'fileID': 'test-400-error', 'temporalBaseline': -1})
-    ]
 
     with pytest.raises(asf_search.ASFSearch4xxError):
         find_new.get_neighbors('test-product')
 
+    assert mock_product_search.mock_calls == [call(['test-product'])]
+    assert mock_stack_from_product.mock_calls == [call(mock_granule)]
+
+
+@patch('asf_search.baseline_search.stack_from_product')
+@patch('asf_search.product_search')
+@responses.activate
+def test_get_neighbors_response_500(mock_product_search: MagicMock, mock_stack_from_product: MagicMock):
+    mock_granule = NonCallableMagicMock()
+    mock_product_search.return_value = [mock_granule]
+
     mock_stack_from_product.return_value = [
-        NonCallableMagicMock(properties={'fileID': 'test-500-error', 'temporalBaseline': -1})
+        NonCallableMagicMock(properties={'fileID': 'file1', 'temporalBaseline': -1})
     ]
+
+    params = {'product_list': 'file1', 'output': 'jsonlite'}
+    responses.post(
+        url=find_new.SEARCH_URL,
+        status=500,
+        match=[responses.matchers.query_param_matcher(params)]
+    )
 
     with pytest.raises(asf_search.ASFSearch5xxError):
         find_new.get_neighbors('test-product')
 
-    assert mock_product_search.mock_calls == [call(['test-product']) for _ in range(2)]
-    assert mock_stack_from_product.mock_calls == [call(mock_granule) for _ in range(2)]
+    assert mock_product_search.mock_calls == [call(['test-product'])]
+    assert mock_stack_from_product.mock_calls == [call(mock_granule)]
 
 
 @patch('asf_search.baseline_search.stack_from_product')
