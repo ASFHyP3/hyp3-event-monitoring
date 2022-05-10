@@ -1,6 +1,6 @@
 import json
 from os import environ
-from unittest.mock import call, patch, MagicMock, NonCallableMagicMock
+from unittest.mock import MagicMock, NonCallableMagicMock, call, patch
 from uuid import uuid4
 
 import asf_search
@@ -275,14 +275,14 @@ def test_get_neighbors_response_errors(mock_product_search: MagicMock, mock_stac
     )
 
     mock_stack_from_product.return_value = [
-        NonCallableMagicMock(properties={'fileID': f'test-400-error', 'temporalBaseline': -1})
+        NonCallableMagicMock(properties={'fileID': 'test-400-error', 'temporalBaseline': -1})
     ]
 
     with pytest.raises(asf_search.ASFSearch4xxError):
         find_new.get_neighbors('test-product')
 
     mock_stack_from_product.return_value = [
-        NonCallableMagicMock(properties={'fileID': f'test-500-error', 'temporalBaseline': -1})
+        NonCallableMagicMock(properties={'fileID': 'test-500-error', 'temporalBaseline': -1})
     ]
 
     with pytest.raises(asf_search.ASFSearch5xxError):
