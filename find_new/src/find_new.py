@@ -75,29 +75,40 @@ def add_invalid_product_record(event_id, granule, message):
 
 
 def get_neighbors(product_name: str, max_neighbors: int = 2) -> List[dict]:
+    if max_neighbors < 1:
+        raise ValueError(f"max_neighbors must be >= 1 but got {max_neighbors}")
+
     results = asf_search.product_search([product_name])
     assert len(results) == 1
     granule: asf_search.ASFProduct = results[0]
 
     stack = asf_search.baseline_search.stack_from_product(granule)
     stack = [item for item in stack if item.properties['temporalBaseline'] < 0]
-    neighbors = [item.properties['fileID'] for item in stack[-max_neighbors:]]
+    neighbor_names = [item.properties['fileID'] for item in stack[-max_neighbors:]]
 
-    response = requests.post(
-        SEARCH_URL,
-        params={
-            'product_list': ','.join(neighbors),
-            'output': 'jsonlite'
-        }
-    )
+    if len(neighbor_names) == 0:
+        neighbors = []
+    else:
+        response = requests.post(
+            SEARCH_URL,
+            params={
+                'product_list': ','.join(neighbor_names),
+                'output': 'jsonlite'
+            }
+        )
 
-    status_code = str(response.status_code)
-    if status_code[0] == '4':
-        raise asf_search.ASFSearch4xxError()
-    elif status_code[0] == '5':
-        raise asf_search.ASFSearch5xxError()
+        status_code = str(response.status_code)
+        if status_code[0] == '4':
+            raise asf_search.ASFSearch4xxError()
+        elif status_code[0] == '5':
+            raise asf_search.ASFSearch5xxError()
 
-    return response.json()['results']
+        neighbors = response.json()['results']
+
+    assert len(neighbors) <= max_neighbors
+    assert len(neighbors) == len(neighbor_names)
+
+    return neighbors
 
 
 def submit_jobs_for_granule(hyp3, event_id, granule):
