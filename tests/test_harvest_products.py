@@ -1,5 +1,5 @@
 from os import environ
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import MagicMock, call, patch
 
 import responses
 from botocore.stub import ANY
@@ -57,7 +57,7 @@ def test_harvest(mock_harvest_file: MagicMock):
         'thumbnail_url': 'https://foo.com/file.png',
         'product_name': 'product.zip',
         'product_size': 123,
-        'product_url': f'https://foo.com/file.png'
+        'product_url': 'https://foo.com/file.png'
     }
 
     assert mock_harvest_file.mock_calls == [
