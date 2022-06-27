@@ -44,14 +44,7 @@ Resources:
                   - dynamodb:Query
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductTable}*"
               - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:GetObjectTagging
-                Resource: "arn:aws:s3:::*/*"
-              - Effect: Allow
-                Action:
-                  - s3:PutObject
-                  - s3:PutObjectTagging
+                Action: s3:PutObject
                 Resource: !Sub "arn:aws:s3:::${ProductBucket}/*"
 
   Lambda:
@@ -66,7 +59,7 @@ Resources:
           EDL_PASSWORD: !Ref EDLPassword
       Code: src/
       Handler: harvest_products.lambda_handler
-      MemorySize: 256
+      MemorySize: 2048
       Role: !GetAtt Role.Arn
       Runtime: python3.8
       Timeout: 900
