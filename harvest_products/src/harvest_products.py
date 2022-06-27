@@ -26,13 +26,14 @@ def harvest_file(file_url, destination_prefix):
 
 def harvest(product, job):
     destination_prefix = f'{product["event_id"]}/{product["product_id"]}'
+    product_file = job.files[0]
 
     return {
         'browse_url': harvest_file(job.browse_images[0], destination_prefix),
         'thumbnail_url': harvest_file(job.thumbnail_images[0], destination_prefix),
-        'product_name': job.files[0]['filename'],
-        'product_size': job.files[0]['size'],
-        'product_url': harvest_file(job.files[0]['url'], destination_prefix),
+        'product_name': product_file['filename'],
+        'product_size': product_file['size'],
+        'product_url': harvest_file(product_file['url'], destination_prefix),
     }
 
 
