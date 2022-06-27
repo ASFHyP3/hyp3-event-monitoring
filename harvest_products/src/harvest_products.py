@@ -13,10 +13,11 @@ from database import database
 S3 = boto3.resource('s3')
 
 
-def harvest_image(image_url, destination_bucket, destination_prefix):
-    filename = basename(urlparse(image_url).path)
+def harvest_file(file_url, destination_prefix):
+    destination_bucket = S3.Bucket(environ['BUCKET_NAME'])
+    filename = basename(urlparse(file_url).path)
     destination_key = f'{destination_prefix}/{filename}'
-    response = requests.get(image_url)
+    response = requests.get(file_url)
     response.raise_for_status()
     content_type = guess_type(filename)[0] if guess_type(filename)[0] else 'application/octet-stream'
     destination_bucket.put_object(Body=io.BytesIO(response.content), Key=destination_key, ContentType=content_type)
@@ -24,23 +25,15 @@ def harvest_image(image_url, destination_bucket, destination_prefix):
 
 
 def harvest(product, job):
-    destination_bucket = S3.Bucket(environ['BUCKET_NAME'])
-    copy_source = {
-        'Bucket': job.files[0]['s3']['bucket'],
-        'Key': job.files[0]['s3']['key'],
-    }
-    product_name = job.files[0]['filename']
     destination_prefix = f'{product["event_id"]}/{product["product_id"]}'
-    destination_key = f'{destination_prefix}/{product_name}'
-    print(f'copying {product_name} to s3://{destination_bucket.name}/{destination_key}')
-    destination_bucket.copy(copy_source, destination_key)
+    product_file = job.files[0]
 
     return {
-        'browse_url': harvest_image(job.browse_images[0], destination_bucket, destination_prefix),
-        'thumbnail_url': harvest_image(job.thumbnail_images[0], destination_bucket, destination_prefix),
-        'product_name': product_name,
-        'product_size': job.files[0]['size'],
-        'product_url': f'https://{destination_bucket.name}.s3.amazonaws.com/{destination_key}',
+        'browse_url': harvest_file(job.browse_images[0], destination_prefix),
+        'thumbnail_url': harvest_file(job.thumbnail_images[0], destination_prefix),
+        'product_name': product_file['filename'],
+        'product_size': product_file['size'],
+        'product_url': harvest_file(product_file['url'], destination_prefix),
     }
 
 

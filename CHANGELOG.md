@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) 
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.0.13]
+### Changed
+- `harvest_products` Lambda function now harvests data products via download and upload, rather than S3 copy.
+
 ## [0.0.12]
 ### Fixed
 - Handle the case where a product has no temporal neighbors.
