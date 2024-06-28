@@ -56,9 +56,9 @@ Review the parameters in [cloudformation.yml](cloudformation.yml) for deploy tim
 - Install dependencies for each component (requires pip for python 3.12)
 
 ```sh
-python -m pip install -r find_new/requirements.txt -t find_new/src
-python -m pip install -r api/requirements.txt -t api/src
-python -m pip install -r harvest_products/requirements.txt -t harvest_products/src
+python -m pip install -r requirements-find-new.txt -t find_new/src
+python -m pip install -r requirements-api.txt -t api/src
+python -m pip install -r requirements-harvest-products.txt -t harvest_products/src
 ```
 
 - Package the CloudFormation template
