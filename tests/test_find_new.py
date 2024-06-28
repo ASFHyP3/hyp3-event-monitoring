@@ -338,7 +338,7 @@ def test_get_neighbors_max_neighbors_error():
 
 @responses.activate
 def test_submit_jobs_for_granule(tables):
-    responses.add(responses.GET, AUTH_URL)
+    responses.add(responses.GET, AUTH_URL, json.dumps({}))
     mock_hyp3_response = {
         'jobs': [
             {
@@ -392,6 +392,10 @@ def test_submit_jobs_for_granule(tables):
         'wkt': 'someWKT',
     }
     event_id = 'event_id1'
+
+    mock_user = {"user_id": "some_user"}
+    responses.add(responses.GET, environ['HYP3_URL'] + '/user', json.dumps(mock_user))
+
 
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     with patch('find_new.get_neighbors', lambda x: mock_neighbors):
@@ -590,13 +594,13 @@ def test_lambda_handler(tables):
 
     assert len(products) == 5
 
-    assert products[2]['job_type'] == 'RTC_GAMMA'
+    assert products[4]['job_type'] == 'RTC_GAMMA'
+    assert products[4]['granules'][0]['granule_name'] == 'granule3'
+
+    assert products[2]['job_type'] == 'INSAR_GAMMA'
     assert products[2]['granules'][0]['granule_name'] == 'granule3'
+    assert products[2]['granules'][1]['granule_name'] == 'neighbor1'
 
     assert products[3]['job_type'] == 'INSAR_GAMMA'
     assert products[3]['granules'][0]['granule_name'] == 'granule3'
-    assert products[3]['granules'][1]['granule_name'] == 'neighbor1'
-
-    assert products[4]['job_type'] == 'INSAR_GAMMA'
-    assert products[4]['granules'][0]['granule_name'] == 'granule3'
-    assert products[4]['granules'][1]['granule_name'] == 'neighbor2'
+    assert products[3]['granules'][1]['granule_name'] == 'neighbor2'

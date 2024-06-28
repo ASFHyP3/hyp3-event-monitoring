@@ -1,5 +1,6 @@
 flask
 flask_api
+werkzeug<3
 Flask-Cors
 serverless_wsgi
 ./database

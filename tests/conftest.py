@@ -5,7 +5,7 @@ import boto3
 import pytest
 import yaml
 from botocore.stub import Stubber
-from moto import mock_dynamodb2
+from moto import mock_aws
 
 import api
 import harvest_products
@@ -23,7 +23,7 @@ def get_table_properties_from_template(resource_name):
 
 @pytest.fixture
 def tables():
-    with mock_dynamodb2():
+    with mock_aws():
         database.DB = boto3.resource('dynamodb')
 
         class Tables:
