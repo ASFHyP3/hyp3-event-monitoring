@@ -338,7 +338,7 @@ def test_get_neighbors_max_neighbors_error():
 
 @responses.activate
 def test_submit_jobs_for_granule(tables):
-    responses.add(responses.GET, AUTH_URL, json.dumps({}))
+    responses.add(responses.GET, AUTH_URL)
     mock_hyp3_response = {
         'jobs': [
             {
@@ -392,9 +392,6 @@ def test_submit_jobs_for_granule(tables):
         'wkt': 'someWKT',
     }
     event_id = 'event_id1'
-
-    mock_user = {"user_id": "some_user"}
-    responses.add(responses.GET, environ['HYP3_URL'] + '/user', json.dumps(mock_user))
 
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     with patch('find_new.get_neighbors', lambda x: mock_neighbors):
