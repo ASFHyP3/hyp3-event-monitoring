@@ -396,7 +396,6 @@ def test_submit_jobs_for_granule(tables):
     mock_user = {"user_id": "some_user"}
     responses.add(responses.GET, environ['HYP3_URL'] + '/user', json.dumps(mock_user))
 
-
     hyp3 = HyP3(environ['HYP3_URL'], username=environ['EDL_USERNAME'], password=environ['EDL_PASSWORD'])
     with patch('find_new.get_neighbors', lambda x: mock_neighbors):
         find_new.submit_jobs_for_granule(hyp3, event_id, granule)
