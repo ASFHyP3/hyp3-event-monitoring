@@ -49,9 +49,9 @@ jobs:
       - name: install dependencies and render templates
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r find_new/requirements.txt -t find_new/src
-          python -m pip install -r api/requirements.txt -t api/src
-          python -m pip install -r harvest_products/requirements.txt -t harvest_products/src
+          python -m pip install -r requirements-find-new.txt -t find_new/src
+          python -m pip install -r requirements-api.txt -t api/src
+          python -m pip install -r requirements-harvest-products.txt -t harvest_products/src
 
       - name: Package and deploy
         run: |
