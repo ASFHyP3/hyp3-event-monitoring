@@ -53,7 +53,7 @@ Review the parameters in [cloudformation.yml](cloudformation.yml) for deploy tim
 
 ### Deploy with CloudFormation
 
-- Install dependencies for each component (requires pip for python 3.8)
+- Install dependencies for each component (requires pip for python 3.12)
 
 ```sh
 python -m pip install -r find_new/requirements.txt -t find_new/src
