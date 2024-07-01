@@ -40,8 +40,7 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Action:
-              - "s3:PutObject"
+          - Action: "s3:PutObject"
             Effect: Allow
             Principal:
               Service: logging.s3.amazonaws.com
