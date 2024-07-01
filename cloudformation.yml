@@ -16,24 +16,53 @@ Parameters:
     Type: CommaDelimitedList
 
 Resources:
-  LogBucket:
-    Type: AWS::S3::Bucket
+  LoggingBucket:
+    Type: 'AWS::S3::Bucket'
     Properties:
-      AccessControl: LogDeliveryWrite
-      OwnershipControls:
-           Rules:
-                - ObjectOwnership: BucketOwnerEnforced
       PublicAccessBlockConfiguration:
         BlockPublicAcls: True
         IgnorePublicAcls: True
         BlockPublicPolicy: True
         RestrictPublicBuckets: True
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+            BucketKeyEnabled: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+
+  LoggingBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref LoggingBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref LoggingBucket
+                - /*
+            Condition:
+              ArnLike:
+                'aws:SourceArn': !GetAtt 
+                  - ProductBucket
+                  - Arn
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'
 
   ProductBucket:
     Type: AWS::S3::Bucket
     Properties:
       LoggingConfiguration:
-        DestinationBucketName: !Ref LogBucket
+        DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: s3-access-logs/product-bucket/
       LifecycleConfiguration:
         Rules:
@@ -58,6 +87,9 @@ Resources:
               - HEAD
             AllowedOrigins:
               - "*.asf.alaska.edu"
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
 
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
