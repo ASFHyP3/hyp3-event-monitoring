@@ -16,7 +16,7 @@ Parameters:
     Type: CommaDelimitedList
 
 Resources:
-  LoggingBucket:
+  LogBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
       PublicAccessBlockConfiguration:
@@ -33,10 +33,10 @@ Resources:
         Rules:
           - ObjectOwnership: BucketOwnerEnforced
 
-  LoggingBucketPolicy:
+  LogBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
     Properties:
-      Bucket: !Ref LoggingBucket
+      Bucket: !Ref LogBucket
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -48,7 +48,7 @@ Resources:
             Resource: !Join 
               - ''
               - - 'arn:aws:s3:::'
-                - !Ref LoggingBucket
+                - !Ref LogBucket
                 - /*
             Condition:
               ArnLike:
@@ -62,7 +62,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       LoggingConfiguration:
-        DestinationBucketName: !Ref LoggingBucket
+        DestinationBucketName: !Ref LogBucket
         LogFilePrefix: s3-access-logs/product-bucket/
       LifecycleConfiguration:
         Rules:
