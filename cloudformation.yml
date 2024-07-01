@@ -17,7 +17,7 @@ Parameters:
 
 Resources:
   LogBucket:
-    Type: 'AWS::S3::Bucket'
+    Type: "AWS::S3::Bucket"
     Properties:
       PublicAccessBlockConfiguration:
         BlockPublicAcls: True
@@ -34,29 +34,23 @@ Resources:
           - ObjectOwnership: BucketOwnerEnforced
 
   LogBucketPolicy:
-    Type: 'AWS::S3::BucketPolicy'
+    Type: "AWS::S3::BucketPolicy"
     Properties:
       Bucket: !Ref LogBucket
       PolicyDocument:
         Version: 2012-10-17
         Statement:
           - Action:
-              - 's3:PutObject'
+              - "s3:PutObject"
             Effect: Allow
             Principal:
               Service: logging.s3.amazonaws.com
-            Resource: !Join 
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref LogBucket
-                - /*
+            Resource: !Sub "${LogBucket.Arn}/*"
             Condition:
               ArnLike:
-                'aws:SourceArn': !GetAtt 
-                  - ProductBucket
-                  - Arn
+                "aws:SourceArn": !GetAtt ContentBucket.Arn
               StringEquals:
-                'aws:SourceAccount': !Sub '${AWS::AccountId}'
+                "aws:SourceAccount": !Sub "${AWS::AccountId}"
 
   ProductBucket:
     Type: AWS::S3::Bucket
