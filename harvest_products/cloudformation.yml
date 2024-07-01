@@ -61,7 +61,7 @@ Resources:
       Handler: harvest_products.lambda_handler
       MemorySize: 2048
       Role: !GetAtt Role.Arn
-      Runtime: python3.8
+      Runtime: python3.12
       Timeout: 900
 
   EventInvokeConfig:

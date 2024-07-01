@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from json import JSONEncoder
 
 from flask import Flask, abort, jsonify
-from flask.json import JSONEncoder
 from flask_api.status import HTTP_404_NOT_FOUND
 from flask_cors import CORS
 from serverless_wsgi import handle_request
