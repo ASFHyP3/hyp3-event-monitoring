@@ -48,7 +48,7 @@ Resources:
             Resource: !Sub "${LogBucket.Arn}/*"
             Condition:
               ArnLike:
-                "aws:SourceArn": !GetAtt ContentBucket.Arn
+                "aws:SourceArn": !GetAtt ProductBucket.Arn
               StringEquals:
                 "aws:SourceAccount": !Sub "${AWS::AccountId}"
 
