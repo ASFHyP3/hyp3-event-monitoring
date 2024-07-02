@@ -1,9 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from json import JSONEncoder
 
 from flask import Flask, abort, jsonify
-from flask.json import JSONEncoder
-from flask_api.status import HTTP_404_NOT_FOUND
 from flask_cors import CORS
 from serverless_wsgi import handle_request
 
@@ -35,7 +34,7 @@ def get_event_by_id(event_id):
     try:
         event = database.get_event(event_id)
     except ValueError:
-        abort(HTTP_404_NOT_FOUND)
+        abort(404)
     event['products'] = database.get_products_for_event(event_id, status_code='SUCCEEDED')
     return jsonify(event)
 

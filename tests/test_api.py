@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
-from flask_api import status
-
 from api import lambda_handler
 
 
@@ -52,29 +50,29 @@ def seed_data(tables):
 
 def test_events(api_client, tables):
     response = api_client.get('/events')
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == 200
     assert response.get_json() == []
 
     seed_data(tables)
 
     response = api_client.get('/events')
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == 200
     assert len(response.get_json()) == 2
 
 
 def test_event_by_id(api_client, tables):
     response = api_client.get('/events/event1')
-    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.status_code == 404
 
     seed_data(tables)
 
     response = api_client.get('/events/event1')
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == 200
     assert response.get_json()['event_id'] == 'event1'
     assert response.get_json()['products'] == []
 
     response = api_client.get('/events/event2')
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == 200
     assert response.get_json()['event_id'] == 'event2'
     product_ids = [p['product_id'] for p in response.get_json()['products']]
     assert sorted(product_ids) == ['product1', 'product3', 'product4']
@@ -82,13 +80,13 @@ def test_event_by_id(api_client, tables):
 
 def test_recent_products(api_client, tables):
     response = api_client.get('/recent_products')
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == 200
     assert response.get_json() == []
 
     seed_data(tables)
 
     response = api_client.get('/recent_products')
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == 200
     product_ids = [p['product_id'] for p in response.get_json()]
     assert sorted(product_ids) == ['product1', 'product3']
 
@@ -113,6 +111,6 @@ def test_lambda_handler():
         'headers': {},
     }
     response = lambda_handler(event, None)
-    assert response['statusCode'] == status.HTTP_404_NOT_FOUND
+    assert response['statusCode'] == 404
     assert response['headers']['Content-Type'] == 'text/html; charset=utf-8'
     assert response['isBase64Encoded'] is False
