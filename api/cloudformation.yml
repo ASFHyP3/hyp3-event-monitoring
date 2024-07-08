@@ -95,5 +95,5 @@ Resources:
       Handler: api.lambda_handler
       MemorySize: 3008
       Role: !GetAtt LambdaRole.Arn
-      Runtime: python3.8
+      Runtime: python3.12
       Timeout: 30
