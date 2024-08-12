@@ -1,4 +1,4 @@
-asf-search==7.1.4
+asf-search==8.0.0
 hyp3-sdk==7.0.1
 python-dateutil==2.9.0.post0
 requests==2.32.3
