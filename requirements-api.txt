@@ -1,4 +1,4 @@
 flask==3.0.3
-Flask-Cors==4.0.1
+Flask-Cors==5.0.0
 serverless_wsgi==3.0.4
 ./database
