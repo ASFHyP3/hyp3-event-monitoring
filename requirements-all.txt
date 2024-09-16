@@ -1,4 +1,4 @@
-boto3==1.35.14
+boto3==1.35.19
 cfn-lint==1.13.0
 flake8==7.1.1
 flake8-blind-except==0.2.1
