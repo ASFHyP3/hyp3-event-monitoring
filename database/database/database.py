@@ -24,10 +24,7 @@ def query_table(table_name, key_expression, filter_expression=None, index_name=N
     items = response['Items']
 
     while 'LastEvaluatedKey' in response:
-        response = table.query(
-            ExclusiveStartKey=response['LastEvaluatedKey'],
-            **query_params
-        )
+        response = table.query(ExclusiveStartKey=response['LastEvaluatedKey'], **query_params)
         items.extend(response['Items'])
     return items
 
