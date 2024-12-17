@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) 
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3]
+### Changed
+- The [`static-analysis`](.github/workflows/static-analysis.yml) Github Actions workflow now uses `ruff` rather than `flake8` for linting.
+
 ## [0.1.2]
 ### Fixed
 - Upgraded to flask-cors v5.0.0 from v4.0.1. Resolves [CVE-2024-6221](https://www.cve.org/CVERecord?id=CVE-2024-6221).

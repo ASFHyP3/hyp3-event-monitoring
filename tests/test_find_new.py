@@ -107,7 +107,7 @@ def test_get_unprocessed_granules(tables):
                     'frame': 456,
                     'wkt': 'someWKT',
                 }
-            ]
+            ],
         },
         {
             'product_id': str(uuid4()),
@@ -121,7 +121,7 @@ def test_get_unprocessed_granules(tables):
                     'frame': 789,
                     'wkt': 'someWKT',
                 },
-            ]
+            ],
         },
     ]
     for item in mock_products:
@@ -225,7 +225,7 @@ def test_get_neighbors(mock_product_search: MagicMock, mock_stack_from_product: 
     responses.post(
         url=find_new.SEARCH_URL,
         body=json.dumps(mock_response_1),
-        match=[responses.matchers.query_param_matcher(params_1)]
+        match=[responses.matchers.query_param_matcher(params_1)],
     )
 
     mock_response_2 = {'results': [{'granuleName': 'granule1'}, {'granuleName': 'granule2'}]}
@@ -233,7 +233,7 @@ def test_get_neighbors(mock_product_search: MagicMock, mock_stack_from_product: 
     responses.post(
         url=find_new.SEARCH_URL,
         body=json.dumps(mock_response_2),
-        match=[responses.matchers.query_param_matcher(params_2)]
+        match=[responses.matchers.query_param_matcher(params_2)],
     )
 
     mock_response_3 = {
@@ -243,7 +243,7 @@ def test_get_neighbors(mock_product_search: MagicMock, mock_stack_from_product: 
     responses.post(
         url=find_new.SEARCH_URL,
         body=json.dumps(mock_response_3),
-        match=[responses.matchers.query_param_matcher(params_3)]
+        match=[responses.matchers.query_param_matcher(params_3)],
     )
 
     assert find_new.get_neighbors('test-product', max_neighbors=1) == mock_response_1['results']
@@ -267,11 +267,7 @@ def test_get_neighbors_response_400(mock_product_search: MagicMock, mock_stack_f
     ]
 
     params = {'product_list': 'file1', 'output': 'jsonlite'}
-    responses.post(
-        url=find_new.SEARCH_URL,
-        status=400,
-        match=[responses.matchers.query_param_matcher(params)]
-    )
+    responses.post(url=find_new.SEARCH_URL, status=400, match=[responses.matchers.query_param_matcher(params)])
 
     with pytest.raises(asf_search.ASFSearch4xxError):
         find_new.get_neighbors('test-product')
@@ -292,11 +288,7 @@ def test_get_neighbors_response_500(mock_product_search: MagicMock, mock_stack_f
     ]
 
     params = {'product_list': 'file1', 'output': 'jsonlite'}
-    responses.post(
-        url=find_new.SEARCH_URL,
-        status=500,
-        match=[responses.matchers.query_param_matcher(params)]
-    )
+    responses.post(url=find_new.SEARCH_URL, status=500, match=[responses.matchers.query_param_matcher(params)])
 
     with pytest.raises(asf_search.ASFSearch5xxError):
         find_new.get_neighbors('test-product')
