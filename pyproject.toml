@@ -1,11 +1,16 @@
+[project]
+name = "hyp3_event_monitoring"
+requires-python = ">=3.10"
+
+[tool.ruff]
 line-length = 120
 src = ["api", "database", "find_new", "harvest_products", "tests"]
 
-[format]
+[tool.ruff.format]
 indent-style = "space"
 quote-style = "single"
 
-[lint]
+[tool.ruff.lint]
 extend-select = [
     "I",   # isort: https://docs.astral.sh/ruff/rules/#isort-i
     # TODO: Uncomment the following extensions and address their warnings:
@@ -15,9 +20,9 @@ extend-select = [
     # "PTH", # use-pathlib-pth: https://docs.astral.sh/ruff/rules/#flake8-use-pathlib-pth
 ]
 
-[lint.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[lint.isort]
+[tool.ruff.lint.isort]
 case-sensitive = true
 lines-after-imports = 2
