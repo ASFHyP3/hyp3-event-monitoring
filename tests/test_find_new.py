@@ -4,14 +4,13 @@ from unittest.mock import MagicMock, NonCallableMagicMock, call, patch
 from uuid import uuid4
 
 import asf_search
+import find_new
 import pytest
 import responses
 from dateutil import parser
 from hyp3_sdk import HyP3
 from hyp3_sdk.exceptions import HyP3Error, ServerError
 from hyp3_sdk.util import AUTH_URL
-
-import find_new
 
 
 @responses.activate

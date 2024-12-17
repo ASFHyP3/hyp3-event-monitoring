@@ -5,6 +5,7 @@ from typing import List
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
+
 DB = boto3.resource('dynamodb')
 EVENT_TABLE = environ.get('EVENT_TABLE', None)
 PRODUCT_TABLE = environ.get('PRODUCT_TABLE', None)
