@@ -1,14 +1,14 @@
 from os import environ
 from pathlib import Path
 
-import api
 import boto3
-import harvest_products
 import pytest
 import yaml
 from botocore.stub import Stubber
 from moto import mock_aws
 
+import api
+import harvest_products
 from database import database
 
 

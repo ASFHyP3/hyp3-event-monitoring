@@ -1,11 +1,12 @@
 from os import environ
 from unittest.mock import MagicMock, call, patch
 
-import harvest_products
 import responses
 from botocore.stub import ANY
 from dateutil import parser
 from hyp3_sdk.jobs import Job
+
+import harvest_products
 
 
 @responses.activate

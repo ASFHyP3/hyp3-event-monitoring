@@ -4,7 +4,13 @@ requires-python = ">=3.10"
 
 [tool.ruff]
 line-length = 120
-src = ["api", "database", "find_new", "harvest_products", "tests"]
+# The directories to consider when resolving first- vs. third-party imports.
+# See: https://docs.astral.sh/ruff/settings/#src
+src = [
+    "**/src",
+    "database",
+    "tests",
+]
 
 [tool.ruff.format]
 indent-style = "space"
