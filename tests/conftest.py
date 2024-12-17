@@ -32,8 +32,7 @@ def tables():
                 **get_table_properties_from_template('EventTable'),
             )
             product_table = database.DB.create_table(
-                TableName=environ['PRODUCT_TABLE'],
-                **get_table_properties_from_template('ProductTable')
+                TableName=environ['PRODUCT_TABLE'], **get_table_properties_from_template('ProductTable')
             )
 
         tables = Tables()

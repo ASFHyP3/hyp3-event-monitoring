@@ -6,10 +6,7 @@ from api import lambda_handler
 
 def seed_data(tables):
     events = [
-        {
-            'event_id': 'event1',
-            'decimal_value': Decimal(1.0)
-        },
+        {'event_id': 'event1', 'decimal_value': Decimal(1.0)},
         {
             'event_id': 'event2',
         },

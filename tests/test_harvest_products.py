@@ -12,12 +12,7 @@ import harvest_products
 @responses.activate
 def test_harvest_file(s3_stubber):
     responses.add(responses.GET, 'https://foo.com/file.png', body='image_content')
-    params = {
-        'Bucket': environ['BUCKET_NAME'],
-        'Key': 'prefix/file.png',
-        'ContentType': 'image/png',
-        'Body': ANY
-    }
+    params = {'Bucket': environ['BUCKET_NAME'], 'Key': 'prefix/file.png', 'ContentType': 'image/png', 'Body': ANY}
     s3_stubber.add_response(method='put_object', expected_params=params, service_response={})
     response = harvest_products.harvest_file('https://foo.com/file.png', 'prefix')
 
@@ -31,7 +26,7 @@ def test_harvest(mock_harvest_file: MagicMock):
         'product_id': 'product_id',
         'granules': [],
         'status_code': 'PENDING',
-        'processing_date': '2020-01-01T00:00:00+00:00'
+        'processing_date': '2020-01-01T00:00:00+00:00',
     }
 
     class MockJob:
@@ -57,7 +52,7 @@ def test_harvest(mock_harvest_file: MagicMock):
         'thumbnail_url': 'https://foo.com/file.png',
         'product_name': 'product.zip',
         'product_size': 123,
-        'product_url': 'https://foo.com/file.png'
+        'product_url': 'https://foo.com/file.png',
     }
 
     assert mock_harvest_file.mock_calls == [
@@ -73,7 +68,7 @@ def test_update_product_succeeded(tables):
         'product_id': 'foo',
         'granules': [],
         'status_code': 'PENDING',
-        'processing_date': '2020-01-01T00:00:00+00:00'
+        'processing_date': '2020-01-01T00:00:00+00:00',
     }
 
     job = Job(
@@ -99,7 +94,7 @@ def test_update_product_succeeded(tables):
         'thumbnail_url': 'THUMBNAIL_IMAGE_URL',
         'product_name': 'product.zip',
         'product_size': 123,
-        'product_url': f'https://{environ["BUCKET_NAME"]}.s3.amazonaws.com/1/foo/product.zip'
+        'product_url': f'https://{environ["BUCKET_NAME"]}.s3.amazonaws.com/1/foo/product.zip',
     }
 
     with patch('harvest_products.harvest', lambda x, y: mock_harvest):
@@ -117,7 +112,7 @@ def test_update_product_failed(tables):
         'product_id': 'foo',
         'granules': [],
         'status_code': 'PENDING',
-        'processing_date': '2020-01-01T00:00:00+00:00'
+        'processing_date': '2020-01-01T00:00:00+00:00',
     }
 
     job = Job(

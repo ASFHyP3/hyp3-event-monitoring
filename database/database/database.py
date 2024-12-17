@@ -5,6 +5,7 @@ from typing import List
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
+
 DB = boto3.resource('dynamodb')
 EVENT_TABLE = environ.get('EVENT_TABLE', None)
 PRODUCT_TABLE = environ.get('PRODUCT_TABLE', None)
@@ -24,10 +25,7 @@ def query_table(table_name, key_expression, filter_expression=None, index_name=N
     items = response['Items']
 
     while 'LastEvaluatedKey' in response:
-        response = table.query(
-            ExclusiveStartKey=response['LastEvaluatedKey'],
-            **query_params
-        )
+        response = table.query(ExclusiveStartKey=response['LastEvaluatedKey'], **query_params)
         items.extend(response['Items'])
     return items
 
