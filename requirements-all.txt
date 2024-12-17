@@ -1,6 +1,6 @@
 boto3==1.35.76
 cfn-lint==1.22.0
-ruff==0.8.3
+ruff
 pytest==8.3.4
 moto==5.0.22
 responses==0.25.3
