@@ -1,5 +1,5 @@
 boto3==1.35.82
-cfn-lint==1.22.2
+cfn-lint==1.22.4
 ruff
 pytest==8.3.4
 moto==5.0.23
