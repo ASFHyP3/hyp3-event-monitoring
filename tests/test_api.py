@@ -6,7 +6,10 @@ from api import lambda_handler
 
 def seed_data(tables):
     events = [
-        {'event_id': 'event1', 'int_decimal_value': Decimal(1.0), 'float_decimal_value': Decimal('1.1')},
+        {
+            'event_id': 'event1',
+            'int_decimal_value': Decimal('1.0'),
+            'float_decimal_value': Decimal('1.1')},
         {
             'event_id': 'event2',
         },
@@ -66,9 +69,15 @@ def test_event_by_id(api_client, tables):
     response = api_client.get('/events/event1')
     assert response.status_code == 200
     assert response.get_json()['event_id'] == 'event1'
-    assert response.get_json()['int_decimal_value'] == 1.0
-    assert response.get_json()['float_decimal_value'] == 1.1
     assert response.get_json()['products'] == []
+
+    int_decimal_value = response.get_json()['int_decimal_value']
+    assert isinstance(int_decimal_value, int)
+    assert int_decimal_value == 1
+
+    float_decimal_value = response.get_json()['float_decimal_value']
+    assert isinstance(float_decimal_value, float)
+    assert float_decimal_value == 1.1
 
     response = api_client.get('/events/event2')
     assert response.status_code == 200

@@ -1,8 +1,11 @@
+import json
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from json import JSONEncoder
+from typing import Any
 
 from flask import Flask, abort, jsonify
+from flask.json.provider import JSONProvider
 from flask_cors import CORS
 from serverless_wsgi import handle_request
 
@@ -18,9 +21,17 @@ class DecimalEncoder(JSONEncoder):
         return super(DecimalEncoder, self).default(o)
 
 
+class CustomJSONProvider(JSONProvider):
+    def dumps(self, obj: Any, **kwargs) -> str:
+        return json.dumps(obj, cls=DecimalEncoder)
+
+    def loads(self, s: str | bytes, **kwargs) -> Any:
+        return json.loads(s)
+
+
 app = Flask(__name__)
 CORS(app)
-app.json_encoder = DecimalEncoder
+app.json = CustomJSONProvider(app)
 
 
 @app.route('/events')
