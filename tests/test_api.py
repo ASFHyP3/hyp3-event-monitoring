@@ -66,6 +66,7 @@ def test_event_by_id(api_client, tables):
     response = api_client.get('/events/event1')
     assert response.status_code == 200
     assert response.get_json()['event_id'] == 'event1'
+    assert response.get_json()['decimal_value'] == 1.0
     assert response.get_json()['products'] == []
 
     response = api_client.get('/events/event2')
