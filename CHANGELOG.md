@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) 
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4]
+### Added
+- Add `mypy` to [`static-analysis`](.github/workflows/static-analysis.yml)
+
+### Fixed
+- Decimal values in our API responses have been incorrectly serialized as strings rather than numbers since at least [v0.1.0](https://github.com/ASFHyP3/hyp3-event-monitoring/pull/79), which broke our custom JSON encoder by pinning to `flask==3.0.3` (`flask` was previously unpinned). The `json_encoder` app attribute was removed in [Flask v2.3.0](https://github.com/pallets/flask/blob/main/CHANGES.rst#version-230). This release fixes this issue by subclassing `flask.json.provider.JSONProvider`. Also see https://github.com/pallets/flask/pull/4692 and [HyP3 v9.0.0](https://github.com/ASFHyP3/hyp3/releases/tag/v9.0.0).
+
 ## [0.1.3]
 ### Changed
 - The [`static-analysis`](.github/workflows/static-analysis.yml) Github Actions workflow now uses `ruff` rather than `flake8` for linting.
