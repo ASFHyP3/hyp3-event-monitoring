@@ -52,7 +52,7 @@ def get_event(event_id: str) -> dict:
     return response['Item']
 
 
-def get_products_for_event(event_id: str, status_code: str = None) -> List[dict]:
+def get_products_for_event(event_id: str, status_code: str | None = None) -> List[dict]:
     key_expression = Key('event_id').eq(event_id)
     if status_code:
         filter_expression = Attr('status_code').eq(status_code)
@@ -61,7 +61,7 @@ def get_products_for_event(event_id: str, status_code: str = None) -> List[dict]
         return query_table(PRODUCT_TABLE, key_expression)
 
 
-def get_products_by_status(status_code: str, processed_since: datetime = None) -> List[dict]:
+def get_products_by_status(status_code: str, processed_since: datetime | None = None) -> List[dict]:
     key_expression = Key('status_code').eq(status_code)
     if processed_since:
         key_expression &= Key('processing_date').gte(processed_since.isoformat(timespec='seconds'))
