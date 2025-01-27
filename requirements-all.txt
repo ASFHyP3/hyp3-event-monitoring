@@ -1,4 +1,4 @@
-boto3==1.36.4
+boto3==1.36.6
 cfn-lint==1.22.6
 ruff
 mypy
