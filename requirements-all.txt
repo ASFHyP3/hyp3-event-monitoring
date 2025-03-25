@@ -2,7 +2,7 @@ boto3==1.37.13
 cfn-lint==1.32.1
 ruff==0.11.2
 mypy==1.15.0
-pytest==8.3.4
+pytest==8.3.5
 moto==5.1.1
 responses==0.25.7
 pyYAML==6.0.2
