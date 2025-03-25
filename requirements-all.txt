@@ -1,5 +1,5 @@
 boto3==1.37.13
-cfn-lint==1.24.0
+cfn-lint==1.32.1
 ruff==0.11.2
 mypy==1.15.0
 pytest==8.3.4
