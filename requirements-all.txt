@@ -1,6 +1,6 @@
 boto3==1.37.23
 cfn-lint==1.32.1
-ruff==0.11.2
+ruff==0.11.4
 mypy==1.15.0
 pytest==8.3.5
 moto==5.1.1
