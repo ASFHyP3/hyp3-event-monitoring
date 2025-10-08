@@ -1,11 +1,11 @@
-boto3==1.40.35
-cfn-lint==1.39.1
-ruff==0.13.1
+boto3==1.40.45
+cfn-lint==1.40.0
+ruff==0.13.3
 mypy==1.18.2
 pytest==8.4.2
-moto==5.1.13
+moto==5.1.14
 responses==0.25.8
-pyYAML==6.0.2
+pyYAML==6.0.3
 -r requirements-find-new.txt
 -r requirements-api.txt
 -r requirements-harvest-products.txt
