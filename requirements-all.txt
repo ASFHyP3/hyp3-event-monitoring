@@ -1,9 +1,9 @@
-boto3==1.40.59
-cfn-lint==1.40.2
-ruff==0.14.2
+boto3==1.40.69
+cfn-lint==1.40.4
+ruff==0.14.4
 mypy==1.18.2
-pytest==8.4.2
-moto==5.1.15
+pytest==9.0.0
+moto==5.1.16
 responses==0.25.8
 pyYAML==6.0.3
 -r requirements-find-new.txt
